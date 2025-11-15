@@ -1,0 +1,160 @@
+.dashboardShell {
+  min-height: 100vh;
+  padding: 2rem clamp(1rem, 4vw, 4rem);
+  background: linear-gradient(180deg, rgba(7, 22, 49, 0.85), rgba(7, 22, 49, 0.75)),
+    url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1400&q=80') center/cover fixed;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  color: #fff;
+}
+
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dashboardEyebrow {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 0.35rem;
+}
+
+.dashboardTitle {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+}
+
+.heroWrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.heroCard {
+  width: min(980px, 95%);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.heroCardMedia {
+  flex: 1 1 420px;
+  min-height: 320px;
+  background: url('https://i.pinimg.com/1200x/76/e1/ea/76e1ea9516941321181088a6c0214159.jpg') center/cover;
+}
+
+.heroCardContent {
+  flex: 1 1 360px;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  color: #0d1b2a;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.heroCardContent h3 {
+  margin: 0;
+  font-size: 1.9rem;
+  color: #08111f;
+}
+
+.heroLocation {
+  text-transform: capitalize;
+  color: #5c6274;
+  margin: 0;
+}
+
+.heroAvailability {
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.heroMeta {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #444b59;
+}
+
+.primaryBtn,
+.secondaryBtn {
+  border: none;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 0.75rem 1.8rem;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primaryBtn {
+  background: linear-gradient(135deg, #ff5f6d, #ffc371);
+  color: #fff;
+  align-self: flex-start;
+  box-shadow: 0 12px 24px rgba(255, 99, 72, 0.35);
+}
+
+.primaryBtn:hover {
+  transform: translateY(-2px);
+}
+
+.secondaryBtn {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.secondaryBtn:hover {
+  transform: translateY(-1px);
+}
+
+.reservationPanel {
+  display: flex;
+  justify-content: center;
+}
+
+.reservationPanelCard {
+  width: min(900px, 95%);
+  background: rgba(255, 255, 255, 0.93);
+  border-radius: 20px;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  color: #0d1b2a;
+}
+
+.reservationPanelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 760px) {
+  .heroCard {
+    flex-direction: column;
+  }
+
+  .dashboardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .secondaryBtn {
+    align-self: stretch;
+    text-align: center;
+  }
+}

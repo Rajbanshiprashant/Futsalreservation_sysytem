@@ -1,54 +1,183 @@
+/* Base */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  margin: 0;
+  padding: 0;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f3f6fb;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Landing hero */
+.home-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #d1f1d9;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.hero-section {
+  background: linear-gradient(90deg, #f3fff7 0%, #e5f9ff 55%, #d1f1d9 100%);
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1.5rem, 6vw, 5rem);
 }
 
-.card {
-  padding: 2em;
+.hero-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
 }
 
-.readTheDocs {
-  color: #888;
+.brand-badge {
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #178c4c;
 }
 
-/* Login Page Styles */
+.hero-nav-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-link {
+  background: transparent;
+  border: none;
+  font-weight: 600;
+  color: #466166;
+  cursor: pointer;
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+.nav-link.active,
+.nav-link:hover {
+  background: rgba(23, 140, 76, 0.12);
+  color: #178c4c;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.5rem;
+  align-items: center;
+}
+
+.hero-copy h1 {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  text-align: left;
+  margin: 0.3rem 0 1rem;
+  color: #111b1e;
+}
+
+.hero-copy h1 span {
+  color: #1d7d3f;
+}
+
+.hero-pill {
+  display: inline-flex;
+  padding: 0.35rem 1rem;
+  background: rgba(23, 140, 76, 0.12);
+  color: #178c4c;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.hero-subtext {
+  color: #4a5d60;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.primary-cta {
+  border: none;
+  background: #21b66f;
+  color: #fff;
+  padding: 0.85rem 2.3rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 12px 25px rgba(33, 182, 111, 0.32);
+}
+
+.ghost-btn {
+  border: 2px solid rgba(33, 182, 111, 0.4);
+  background: transparent;
+  color: #178c4c;
+  padding: 0.8rem 1.8rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hero-visual {
+  display: flex;
+  justify-content: center;
+}
+
+.hero-visual-browser {
+  width: min(420px, 95%);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.12);
+  padding: 1rem;
+}
+
+.browser-dots {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.browser-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #d4dadc;
+}
+
+.hero-visual-playground {
+  margin-top: 1rem;
+  height: 260px;
+  border-radius: 16px;
+  background: radial-gradient(circle at 20% 20%, rgba(49, 158, 95, 0.45), rgba(8, 19, 29, 0.9)),
+    url('https://images.unsplash.com/photo-1508609349937-5ec4ae374ebf?auto=format&fit=crop&w=1200&q=80') center/cover;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-player {
+  position: absolute;
+  inset: 0;
+  background: url('https://i.pinimg.com/564x/35/97/09/359709e403aa2672b32ece48f74c4614.jpg') center/contain no-repeat;
+  filter: drop-shadow(0 18px 35px rgba(0, 0, 0, 0.45));
+}
+
+.auth-section {
+  padding: clamp(2rem, 5vw, 4rem) clamp(1.5rem, 6vw, 5rem);
+  display: flex;
+  justify-content: center;
+  background: #f3fff7;
+}
+
+/* Auth card */
 .login-container {
-  max-width: 400px;
-  margin: 40px auto;
-  padding: 2rem;
-  background: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  width: min(420px, 100%);
+  padding: 2.5rem 2rem;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
 }
 
 .login-container h1 {
@@ -92,13 +221,11 @@
   background: #4b52c7;
 }
 
-.login-container p {
-  margin-top: 1rem;
-  color: #d32f2f;
-  font-weight: 500;
+.small {
+  font-size: 0.95rem;
+  color: #555;
 }
 
-.small { font-size: 0.95rem; color:#555 }
 .link-button {
   border: none;
   background: transparent;
@@ -107,27 +234,214 @@
   padding: 0;
   font-weight: 600;
 }
-.link-button:hover { text-decoration: underline }
 
-.message-error { color: #d32f2f; margin-top: 1rem; font-weight: 600 }
-.message-success { color: #2e7d32; margin-top: 1rem; font-weight: 600 }
-
-/* Reservations styles */
-.reservations-container { background:#fafafa; padding:1rem; border-radius:6px }
-.reservation-form { display:flex; flex-direction:column; gap:0.8rem; max-width:480px }
-.reservation-form label { display:flex; flex-direction:column; font-weight:500 }
-.reservation-form input, .reservation-form select { padding:0.5rem; border:1px solid #ccc; border-radius:4px }
-.reservations-container h3 { margin-bottom:0.8rem }
-
-/* Dashboard styles */
-.dashboard-container {
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  text-align: left;
+.link-button:hover {
+  text-decoration: underline;
 }
-.dashboard-actions { margin-top: 1.2rem; }
-.dashboard-actions button { padding: 0.6rem 0.9rem; background:#646cff; color:#fff; border:none; border-radius:4px; cursor:pointer }
+
+.message-error {
+  color: #d32f2f;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+.message-success {
+  color: #2e7d32;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+/* Reservations */
+.reservations-container {
+  background: transparent;
+  padding: 0;
+}
+
+.reservation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  max-width: 480px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.reservation-form label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+}
+
+.reservation-form input,
+.reservation-form select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Dashboard */
+.dashboard-shell {
+  min-height: 100vh;
+  padding: 2rem clamp(1rem, 4vw, 4rem);
+  background: linear-gradient(180deg, rgba(7, 22, 49, 0.85), rgba(7, 22, 49, 0.75)),
+    url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1400&q=80') center/cover fixed;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  color: #fff;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dashboard-eyebrow {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 0.35rem;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+}
+
+.hero-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.hero-card {
+  width: min(980px, 95%);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.hero-card-media {
+  flex: 1 1 420px;
+  min-height: 320px;
+  background: url('https://i.pinimg.com/1200x/76/e1/ea/76e1ea9516941321181088a6c0214159.jpg') center/cover;
+}
+
+.hero-card-content {
+  flex: 1 1 360px;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  color: #0d1b2a;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.hero-card-content h3 {
+  margin: 0;
+  font-size: 1.9rem;
+  color: #08111f;
+}
+
+.hero-location {
+  text-transform: capitalize;
+  color: #5c6274;
+  margin: 0;
+}
+
+.hero-availability {
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.hero-meta {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #444b59;
+}
+
+.primary-btn,
+.secondary-btn {
+  border: none;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 0.75rem 1.8rem;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #ff5f6d, #ffc371);
+  color: #fff;
+  align-self: flex-start;
+  box-shadow: 0 12px 24px rgba(255, 99, 72, 0.35);
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+}
+
+.secondary-btn {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.secondary-btn:hover {
+  transform: translateY(-1px);
+}
+
+.reservation-panel {
+  display: flex;
+  justify-content: center;
+}
+
+.reservation-panel-card {
+  width: min(900px, 95%);
+  background: rgba(255, 255, 255, 0.93);
+  border-radius: 20px;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  color: #0d1b2a;
+}
+
+.reservation-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.reservation-panel-card h3 {
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .hero-card {
+    flex-direction: column;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .secondary-btn {
+    align-self: stretch;
+    text-align: center;
+  }
+}

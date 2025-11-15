@@ -1,15 +1,46 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../App.css';
+import { apiClient } from '../services/apiClient';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Reservations() {
+  const { token } = useAuth();
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [contact, setContact] = useState('');
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [reservations, setReservations] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const resetForm = () => {
+    setName('');
+    setDate('');
+    setTime('');
+    setContact('');
+  };
+
+  const fetchReservations = async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const data = await apiClient.get('/api/reservations', { token });
+      setReservations(data);
+    } catch (error) {
+      setMessageType('error');
+      setMessage(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReservations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
     if (!name || !date || !time || !contact) {
@@ -18,30 +49,19 @@ export default function Reservations() {
       return;
     }
 
-    const token = localStorage.getItem('token');
-
-    fetch('http://localhost:3000/api/reservations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ name, date, time, contact }),
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to save reservation');
-        setMessageType('success');
-        setMessage('Reservation saved');
-        setName('');
-        setDate('');
-        setTime('');
-        setContact('');
-      })
-      .catch((err) => {
-        setMessageType('error');
-        setMessage(err.message);
+    try {
+      await apiClient.post('/api/reservations', {
+        token,
+        body: { name, date, time, contact },
       });
+      setMessageType('success');
+      setMessage('Reservation saved');
+      resetForm();
+      fetchReservations();
+    } catch (error) {
+      setMessageType('error');
+      setMessage(error.message);
+    }
   };
 
   return (
@@ -50,15 +70,15 @@ export default function Reservations() {
       <form className="reservation-form" onSubmit={handleSubmit}>
         <label>
           Your Name:
-          <input value={name} onChange={e => setName(e.target.value)} />
+          <input value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         <label>
           Date:
-          <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
         <label>
           Time Slot:
-          <select value={time} onChange={e => setTime(e.target.value)}>
+          <select value={time} onChange={(e) => setTime(e.target.value)}>
             <option value="">Select a time</option>
             <option value="6-7am">6-7am</option>
             <option value="7-8am">7-8am</option>
@@ -69,11 +89,26 @@ export default function Reservations() {
         </label>
         <label>
           Contact:
-          <input value={contact} onChange={e => setContact(e.target.value)} />
+          <input value={contact} onChange={(e) => setContact(e.target.value)} />
         </label>
         <button type="submit">Reserve</button>
       </form>
       {message && <p className={messageType === 'success' ? 'message-success' : 'message-error'}>{message}</p>}
+
+      <div style={{ marginTop: 20 }}>
+        <h4>Your reservations</h4>
+        {loading && <p className="small">Loading reservations...</p>}
+        {!loading && reservations.length === 0 && <p className="small">No reservations yet.</p>}
+        {!loading && reservations.length > 0 && (
+          <ul className="reservation-list">
+            {reservations.map((reservation) => (
+              <li key={reservation._id}>
+                <strong>{reservation.name}</strong> — {reservation.date} at {reservation.time} ({reservation.contact})
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
