@@ -1,0 +1,99 @@
+.authShell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3fff7;
+  padding: clamp(2rem, 5vw, 4rem) clamp(1.5rem, 6vw, 5rem);
+  background-image: url('https://i.pinimg.com/1200x/76/e1/ea/76e1ea9516941321181088a6c0214159.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.authCard {
+  width: min(420px, 100%);
+  padding: 2.5rem 2rem;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
+}
+
+.authTitle {
+  margin-bottom: 1.5rem;
+  color: #1d7d3f;
+  text-align: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+  color: #444;
+}
+
+.form input,
+.form select {
+  padding: 0.5rem;
+  margin-top: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form button {
+  padding: 0.7rem;
+  background: #1d7d3f;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.form button:hover {
+  background:#1a7139;
+}
+
+.smallText {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.linkButton {
+  border: none;
+  background: transparent;
+  color: #646cff;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 600;
+}
+
+.linkButton:hover {
+  text-decoration: underline;
+}
+
+.inlineActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.statusMessage {
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+.statusSuccess {
+  color: #2e7d32;
+}
+
+.statusError {
+  color: #d32f2f;
+}

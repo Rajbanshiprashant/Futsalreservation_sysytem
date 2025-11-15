@@ -48,7 +48,7 @@
 .heroCardMedia {
   flex: 1 1 420px;
   min-height: 320px;
-  background: url('https://i.pinimg.com/1200x/76/e1/ea/76e1ea9516941321181088a6c0214159.jpg') center/cover;
+  background: url('https://i.pinimg.com/736x/61/51/dc/6151dc085da2bb874c951fd81f3052b7.jpg') center/cover;
 }
 
 .heroCardContent {
@@ -111,7 +111,7 @@
 }
 
 .secondaryBtn {
-  background: rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.15);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }

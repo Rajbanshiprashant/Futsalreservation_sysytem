@@ -8,7 +8,7 @@ export default function Dashboard() {
   const { user, logout, loading } = useAuth();
 
   const futsalDetails = {
-    name: 'ABC Futsal',
+    name: 'Himalayan Futsal',
     location: 'Kathmandu',
     availability: 'Available for booking',
     open: 'Open all days',
