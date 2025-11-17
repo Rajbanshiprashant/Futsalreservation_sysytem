@@ -24,7 +24,7 @@ export default function Home() {
           <div className={styles.brandBadge}>Futsal Reservation Syatem</div>
           <nav className={styles.heroNavLinks}>
             <button type="button" className={`${styles.navLink} ${styles.navLinkActive}`}>Home</button>
-            <button type="button" className={styles.navLink} onClick={() => goToAuth('register')}>Programs</button>
+            <button type="button" className={styles.navLink} onClick={() => goToAuth('register')}></button>
             <button type="button" className={styles.navLink} onClick={() => goToAuth('login')}>Contact</button>
           </nav>
         </header>
