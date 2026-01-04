@@ -301,13 +301,6 @@ body {
   gap: 1rem;
 }
 
-.dashboard-eyebrow {
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.75);
-  margin-bottom: 0.35rem;
-}
 
 .dashboard-header h2 {
   margin: 0;

@@ -1,0 +1,46 @@
+.headerShell {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brandBadge {
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #178c4c;
+}
+
+.navLinks {
+  display: flex;
+  gap: 1rem;
+}
+
+.navLink {
+  background: transparent;
+  border: none;
+  font-weight: 600;
+  color: #466166;
+  cursor: pointer;
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.navLinkActive,
+.navLink:hover {
+  background: rgba(23, 140, 76, 0.12);
+  color: #178c4c;
+}
+
+@media (max-width: 760px) {
+  .headerShell {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navLinks {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}

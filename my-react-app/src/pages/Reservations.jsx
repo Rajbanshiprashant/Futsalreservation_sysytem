@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../App.css';
 import { apiClient } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext.jsx';
 
+const HOURLY_RATE = 1200;
+
 export default function Reservations() {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
@@ -50,14 +54,22 @@ export default function Reservations() {
     }
 
     try {
-      await apiClient.post('/api/reservations', {
+      const data = await apiClient.post('/api/reservations', {
         token,
         body: { name, date, time, contact },
       });
       setMessageType('success');
-      setMessage('Reservation saved');
+      setMessage('Reservation saved. Redirecting to payment...');
       resetForm();
-      fetchReservations();
+      await fetchReservations();
+
+      const reservationPayload = data?.reservation ?? { name, date, time, contact };
+      navigate('/payment', {
+        state: {
+          reservation: reservationPayload,
+          amount: HOURLY_RATE,
+        },
+      });
     } catch (error) {
       setMessageType('error');
       setMessage(error.message);
@@ -71,6 +83,7 @@ export default function Reservations() {
         <label>
           Your Name:
           <input value={name} onChange={(e) => setName(e.target.value)} />
+
         </label>
         <label>
           Date:

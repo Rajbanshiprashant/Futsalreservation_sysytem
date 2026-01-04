@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SiteHeader from '../components/layout/SiteHeader.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import styles from './Home.module.css';
 
@@ -20,14 +21,7 @@ export default function Home() {
   return (
     <div className={styles.homeShell}>
       <section className={styles.heroSection}>
-        <header className={styles.heroNav}>
-          <div className={styles.brandBadge}>Futsal Reservation Syatem</div>
-          <nav className={styles.heroNavLinks}>
-            <button type="button" className={`${styles.navLink} ${styles.navLinkActive}`}>Home</button>
-            <button type="button" className={styles.navLink} onClick={() => goToAuth('register')}></button>
-            <button type="button" className={styles.navLink} onClick={() => goToAuth('login')}>Contact</button>
-          </nav>
-        </header>
+        <SiteHeader className={styles.heroNav} />
         <div className={styles.heroGrid}>
           <div>
             <p className={styles.heroPill}> Himalayan Futsal</p>
