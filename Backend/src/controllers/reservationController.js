@@ -1,3 +1,4 @@
+const {isFuture} = require("date-fns");
 const Reservation = require('../models/Reservation');
 const asyncHandler = require('../utils/asyncHandler');
 
@@ -5,6 +6,15 @@ const createReservation = asyncHandler(async (req, res) => {
   const { name, date, time, contact } = req.body;
   if (!name || !date || !time || !contact) {
     return res.status(400).json({ error: 'All fields are required' });
+  }
+
+  if(!isFuture(new Date(date))){
+    return res.status(400).json({error:"Invalid Date for reservation"});
+  }
+
+  const conflictingReservation = await Reservation.findOne({ date, time });
+  if(conflictingReservation){
+    return res.status(409).json({error:"Selected date and time are already booked"});
   }
 
   const reservation = await Reservation.create({

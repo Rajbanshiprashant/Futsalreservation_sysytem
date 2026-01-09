@@ -60,11 +60,11 @@ export default function Contact() {
           <div className={styles.formRow}>
             <label>
               Full name
-              <input type="text" name="name" placeholder="Sandesh Rai" required />
+              <input type="text" name="name" placeholder="Falano Rai" required />
             </label>
             <label>
               Team name
-              <input type="text" name="team" placeholder="Skyline FC" />
+              <input type="text" name="team" placeholder="Jhapa FC" />
             </label>
           </div>
           <div className={styles.formRow}>

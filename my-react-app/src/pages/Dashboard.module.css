@@ -57,8 +57,25 @@
   color: #0d1b2a;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 1.2rem;
   justify-content: center;
+}
+
+.heroHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.heroBadge {
+  background: rgba(17, 94, 89, 0.12);
+  color: #0f5f5a;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(17, 94, 89, 0.25);
 }
 
 .heroCardContent h3 {
@@ -78,16 +95,6 @@
   margin-top: 0.5rem;
 }
 
-.heroMeta {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  color: #444b59;
-}
-
 .primaryBtn,
 .secondaryBtn {
   border: none;
@@ -104,6 +111,43 @@
   color: #060606;
   align-self: flex-start;
   box-shadow: 0 12px 24px rgba(255, 99, 72, 0.35);
+}
+
+.heroActions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.detailCard {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid rgba(13, 27, 42, 0.08);
+  box-shadow: 0 12px 30px rgba(9, 21, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detailLabel {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(13, 27, 42, 0.6);
+  margin: 0;
+}
+
+.detailValue {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+  color: #07152b;
 }
 
 .primaryBtn:hover {

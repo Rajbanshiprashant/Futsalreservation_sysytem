@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import '../App.css';
+import styles from './Payment.module.css';
 
 const DEFAULT_RATE = 1200;
 
@@ -35,77 +35,109 @@ export default function Payment() {
     }, 1200);
   };
 
+  const summaryDetails = useMemo(() => {
+    if (!reservation) return [];
+    return [
+      { label: 'Player', value: reservation.name },
+      { label: 'Date', value: reservation.date },
+      { label: 'Time slot', value: reservation.time },
+      { label: 'Contact', value: reservation.contact },
+      { label: 'Amount due', value: `Rs ${amount}` },
+    ];
+  }, [reservation, amount]);
+
+  const paymentOptions = useMemo(
+    () => [
+      { value: 'esewa', label: 'eSewa', hint: 'Instant transfer' },
+      { value: 'khalti', label: 'Khalti', hint: 'Rewards eligible' },
+      { value: 'fonepay', label: 'FonePay', hint: 'Scan & pay' },
+    ],
+    []
+  );
+
   return (
-    <div className="payment-shell">
-      <div className="payment-card">
-        <header className="payment-card-header">
-          <button className="secondary-btn" type="button" onClick={() => navigate('/dashboard')}>
+    <div className={styles.paymentShell}>
+      <div className={styles.paymentCard}>
+        <header className={styles.paymentHeader}>
+          <button className={styles.secondaryBtn} type="button" onClick={() => navigate('/dashboard')}>
             Back to dashboard
           </button>
-          <h2>Complete your payment</h2>
-          <p className="small">Secure your slot by paying the reservation fee.</p>
+          <div>
+            <p className={styles.eyebrow}>Secure checkout</p>
+            <h2>Complete your payment</h2>
+            <p className={styles.subtext}>Review your reservation and choose a preferred payment method.</p>
+          </div>
         </header>
 
         {reservation ? (
           <>
-            <section className="payment-summary">
-              <h3>Reservation summary</h3>
-              <div className="payment-summary-grid">
+            <section className={styles.summarySection}>
+              <div className={styles.summaryHeader}>
                 <div>
-                  <span>Player name</span>
-                  <strong>{reservation.name}</strong>
+                  <p className={styles.eyebrow}>Reservation</p>
+                  <h3>Summary</h3>
                 </div>
-                <div>
-                  <span>Date</span>
-                  <strong>{reservation.date}</strong>
-                </div>
-                <div>
-                  <span>Time slot</span>
-                  <strong>{reservation.time}</strong>
-                </div>
-                <div>
-                  <span>Contact</span>
-                  <strong>{reservation.contact}</strong>
-                </div>
-                <div>
-                  <span>Amount due</span>
-                  <strong>Rs {amount}</strong>
-                </div>
+                <span className={styles.badge}>{reservation.date}</span>
+              </div>
+              <div className={styles.summaryGrid}>
+                {summaryDetails.map((item) => (
+                  <div key={item.label} className={styles.summaryCard}>
+                    <p className={styles.summaryLabel}>{item.label}</p>
+                    <p className={styles.summaryValue}>{item.value}</p>
+                  </div>
+                ))}
               </div>
             </section>
 
-            <section className="payment-methods">
-              <h3>Select payment method</h3>
-              <div className="payment-method-options">
-                {['esewa', 'khalti', 'fonepay'].map((value) => (
-                  <label key={value} className={`payment-method ${method === value ? 'payment-method-active' : ''}`}>
+            <section className={styles.methodSection}>
+              <div className={styles.methodHeader}>
+                <div>
+                  <p className={styles.eyebrow}>Payment options</p>
+                  <h3>Select method</h3>
+                </div>
+                <p className={styles.subtext}>Supported wallets in Nepal</p>
+              </div>
+              <div className={styles.methodGrid}>
+                {paymentOptions.map((option) => (
+                  <label
+                    key={option.value}
+                    className={`${styles.methodCard} ${method === option.value ? styles.methodActive : ''}`}
+                  >
                     <input
                       type="radio"
                       name="payment-method"
-                      value={value}
-                      checked={method === value}
+                      value={option.value}
+                      checked={method === option.value}
                       onChange={(e) => setMethod(e.target.value)}
                     />
-                    <span>{value === 'esewa' ? 'eSewa' : value === 'khalti' ? 'Khalti' : 'FonePay'}</span>
+                    <div>
+                      <p className={styles.methodLabel}>{option.label}</p>
+                      <p className={styles.methodHint}>{option.hint}</p>
+                    </div>
                   </label>
                 ))}
               </div>
             </section>
 
-            <button
-              type="button"
-              className="primary-btn payment-btn"
-              onClick={handlePayment}
-              disabled={status === 'processing'}
-            >
-              {status === 'processing' ? 'Processing...' : `Pay Rs ${amount} with ${method}`}
-            </button>
+            <div className={styles.ctaRow}>
+              <button
+                type="button"
+                className={styles.primaryBtn}
+                onClick={handlePayment}
+                disabled={status === 'processing'}
+              >
+                {status === 'processing' ? 'Processing...' : `Pay Rs ${amount} with ${method}`}
+              </button>
+              <p className={styles.helpText}>You will receive a confirmation SMS after successful payment.</p>
+            </div>
             {message && (
-              <p className={status === 'success' ? 'message-success' : 'message-error'}>{message}</p>
+              <p className={`${styles.statusMessage} ${status === 'success' ? styles.success : styles.error}`}>
+                {message}
+              </p>
             )}
           </>
         ) : (
-          <p className="message-error">{message || 'Missing reservation details.'}</p>
+          <p className={`${styles.statusMessage} ${styles.error}`}>{message || 'Missing reservation details.'}</p>
         )}
       </div>
     </div>

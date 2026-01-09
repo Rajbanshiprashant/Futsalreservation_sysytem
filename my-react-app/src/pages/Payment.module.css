@@ -1,0 +1,209 @@
+.paymentShell {
+  min-height: 100vh;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background: radial-gradient(circle at 20% 20%, rgba(14, 116, 144, 0.35), rgba(3, 15, 35, 0.92));
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  color: #051427;
+}
+
+.paymentCard {
+  width: min(960px, 100%);
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 28px;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  box-shadow: 0 35px 80px rgba(3, 7, 18, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.paymentHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  color: rgba(5, 20, 39, 0.6);
+  margin: 0;
+}
+
+.subtext {
+  margin: 0.25rem 0 0;
+  color: rgba(5, 20, 39, 0.65);
+}
+
+.secondaryBtn {
+  border: 1px solid rgba(5, 20, 39, 0.2);
+  background: transparent;
+  color: #051427;
+  padding: 0.75rem 1.5rem;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.secondaryBtn:hover {
+  background: rgba(5, 20, 39, 0.08);
+}
+
+.summarySection,
+.methodSection {
+  background: #f7f8fb;
+  border-radius: 24px;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid rgba(8, 23, 54, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.summaryHeader,
+.methodHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  background: rgba(14, 165, 233, 0.15);
+  color: #0369a1;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.summaryCard {
+  background: #fff;
+  border-radius: 18px;
+  padding: 1rem;
+  box-shadow: 0 12px 25px rgba(4, 18, 41, 0.08);
+  border: 1px solid rgba(8, 23, 54, 0.06);
+}
+
+.summaryLabel {
+  margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(5, 20, 39, 0.55);
+}
+
+.summaryValue {
+  margin: 0.35rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #051427;
+}
+
+.methodGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.methodCard {
+  border-radius: 18px;
+  border: 1px solid rgba(8, 23, 54, 0.12);
+  padding: 1rem 1.2rem;
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.methodCard input {
+  accent-color: #0ea5e9;
+}
+
+.methodActive {
+  border-color: #0ea5e9;
+  box-shadow: 0 12px 30px rgba(14, 165, 233, 0.25);
+}
+
+.methodLabel {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.methodHint {
+  margin: 0.15rem 0 0;
+  color: rgba(5, 20, 39, 0.6);
+  font-size: 0.9rem;
+}
+
+.ctaRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.primaryBtn {
+  border: none;
+  background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+  color: #fff;
+  padding: 1rem 1.5rem;
+  border-radius: 18px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 20px 45px rgba(14, 165, 233, 0.35);
+  transition: transform 0.2s ease;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.helpText {
+  margin: 0;
+  color: rgba(5, 20, 39, 0.55);
+}
+
+.statusMessage {
+  font-weight: 600;
+}
+
+.success {
+  color: #15803d;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+@media (max-width: 720px) {
+  .paymentCard {
+    border-radius: 22px;
+  }
+
+  .summaryGrid,
+  .methodGrid {
+    grid-template-columns: 1fr;
+  }
+}

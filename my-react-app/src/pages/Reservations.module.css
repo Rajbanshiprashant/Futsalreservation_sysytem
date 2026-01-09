@@ -1,0 +1,259 @@
+.reservationsShell {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: clamp(1.5rem, 4vw, 3rem);
+  width: 100%;
+}
+
+.formColumn,
+.infoColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formCard,
+.infoCard,
+.listCard {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  box-shadow: 0 18px 45px rgba(9, 21, 42, 0.15);
+  border: 1px solid rgba(13, 27, 42, 0.08);
+}
+
+.formHeader h3 {
+  margin: 0.3rem 0 0.4rem;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  color: rgba(8, 17, 31, 0.6);
+  margin: 0;
+}
+
+.subtext {
+  margin: 0;
+  color: rgba(8, 17, 31, 0.65);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+  color: #1b1f2b;
+}
+
+.field span {
+  font-weight: 600;
+}
+
+.field input,
+.field select {
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  background: #f8fafc;
+  font-size: 1rem;
+  color: #111827;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+}
+
+.primaryBtn {
+  grid-column: 1 / -1;
+  border: none;
+  background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+  color: #fff;
+  padding: 0.95rem 1.5rem;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 15px 30px rgba(14, 165, 233, 0.35);
+  transition: transform 0.2s ease;
+}
+
+.primaryBtn:hover {
+  transform: translateY(-1px);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.secondaryBtn {
+  border: 1px solid rgba(15, 23, 42, 0.25);
+  background: transparent;
+  color: #0f172a;
+  padding: 0.85rem 1.4rem;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.secondaryBtn:hover:not(:disabled) {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.secondaryBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feedback {
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+.success {
+  color: #15803d;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.infoCard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.infoValue {
+  margin: 0.2rem 0 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.listCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.badge {
+  background: rgba(14, 165, 233, 0.18);
+  color: #0369a1;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.smallText {
+  color: rgba(15, 23, 42, 0.6);
+}
+
+.reservationList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.reservationItem {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid rgba(51, 65, 85, 0.08);
+}
+
+.reservationName {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.reservationMeta {
+  margin: 0.15rem 0 0;
+  color: rgba(15, 23, 42, 0.6);
+}
+
+.reservationTime {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-weight: 600;
+  color: #0f172a;
+  gap: 0.15rem;
+}
+
+@media (max-width: 600px) {
+  .reservationItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .reservationTime {
+    align-items: flex-start;
+  }
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.modalCard {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: clamp(1.5rem, 4vw, 2.4rem);
+  width: min(420px, 100%);
+  box-shadow: 0 35px 70px rgba(15, 23, 42, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  text-align: left;
+}
+
+.modalCard h4 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: #0f172a;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}

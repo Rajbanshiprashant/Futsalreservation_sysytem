@@ -17,6 +17,15 @@ export default function Dashboard() {
     capacity: 'Max 10 players',
   };
 
+  const detailFrames = [
+    { label: 'Location', value: futsalDetails.location },
+    { label: 'Availability', value: futsalDetails.availability },
+    { label: 'Operating Hours', value: futsalDetails.open },
+    { label: 'Hourly Rate', value: futsalDetails.price },
+    { label: 'Court Type', value: futsalDetails.type },
+    { label: 'Capacity', value: futsalDetails.capacity },
+  ];
+
   return (
     <div className={styles.dashboardShell}>
       <header className={styles.dashboardHeader}>
@@ -33,18 +42,26 @@ export default function Dashboard() {
           <div className={styles.heroCard}>
             <div className={styles.heroCardMedia} aria-label="Futsal field" />
             <div className={styles.heroCardContent}>
-              <h3>{futsalDetails.name}</h3>
-              <p className={styles.heroLocation}>{futsalDetails.location}</p>
-              <p className={styles.heroAvailability}>{futsalDetails.availability}</p>
-              <ul className={styles.heroMeta}>
-                <li>{futsalDetails.open}</li>
-                <li>{futsalDetails.price}</li>
-                <li>{futsalDetails.type}</li>
-                <li>{futsalDetails.capacity}</li>
-              </ul>
-              <button className={styles.primaryBtn} onClick={() => setView('reservations')}>
-                Book Now
-              </button>
+              <div className={styles.heroHeader}>
+                <div>
+                  <p className={styles.dashboardEyebrow}>Featured Court</p>
+                  <h3>{futsalDetails.name}</h3>
+                </div>
+                <span className={styles.heroBadge}>{futsalDetails.availability}</span>
+              </div>
+              <div className={styles.detailGrid}>
+                {detailFrames.map((item) => (
+                  <div key={item.label} className={styles.detailCard}>
+                    <p className={styles.detailLabel}>{item.label}</p>
+                    <p className={styles.detailValue}>{item.value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className={styles.heroActions}>
+                <button className={styles.primaryBtn} onClick={() => setView('reservations')}>
+                  Book Now
+                </button>
+              </div>
             </div>
           </div>
         </section>
