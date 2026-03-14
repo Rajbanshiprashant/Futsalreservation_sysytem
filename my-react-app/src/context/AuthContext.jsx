@@ -36,17 +36,25 @@ export const AuthProvider = ({ children }) => {
 
   const login = (newToken, profile) => {
     localStorage.setItem(tokenKey, newToken);
+    localStorage.setItem('user', JSON.stringify(profile));
     setToken(newToken);
     setUser(profile);
   };
 
+  const updateUser = (updates) => {
+    const updatedUser = { ...user, ...updates };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
   const logout = () => {
     localStorage.removeItem(tokenKey);
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
   };
 
-  const value = useMemo(() => ({ token, user, login, logout, loading }), [token, user, loading]);
+  const value = useMemo(() => ({ token, user, login, logout, updateUser, loading }), [token, user, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
