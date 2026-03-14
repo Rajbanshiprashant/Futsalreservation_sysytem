@@ -11,4 +11,7 @@ module.exports = {
   OTP_EXPIRY_MS: Number(process.env.OTP_EXPIRY_MS) || 5 * 60 * 1000,
   MAIL_USER: process.env.USER_EMAIL,
   MAIL_PASS: process.env.APP_PASSWORD,
+  KHALTI_SECRET_KEY: process.env.KHALTI_SECRET_KEY || '',
+  KHALTI_PUBLIC_KEY: process.env.KHALTI_PUBLIC_KEY || '',
+  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
 };
