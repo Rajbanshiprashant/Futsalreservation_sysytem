@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const request = async (endpoint, { method = 'GET', body, token, headers = {} } = {}) => {
   const config = {
@@ -31,6 +31,9 @@ const request = async (endpoint, { method = 'GET', body, token, headers = {} } =
 export const apiClient = {
   get: (endpoint, options) => request(endpoint, { ...options, method: 'GET' }),
   post: (endpoint, options) => request(endpoint, { ...options, method: 'POST' }),
+  put: (endpoint, options) => request(endpoint, { ...options, method: 'PUT' }),
+  patch: (endpoint, options) => request(endpoint, { ...options, method: 'PATCH' }),
+  delete: (endpoint, options) => request(endpoint, { ...options, method: 'DELETE' }),
 };
 
 export { API_BASE };
