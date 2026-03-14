@@ -100,11 +100,35 @@ const loginUser = asyncHandler(async (req, res) => {
   if (!isValid) return res.status(401).json({ error: 'Invalid credentials' });
 
   const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '8h' });
-  return res.json({ token, username: user.username });
+  
+  // Determine redirect URL based on user role
+  const redirectUrl = user.role === 'admin' ? '/admin' : '/reservations';
+  
+  return res.json({ 
+    token, 
+    username: user.username,
+    role: user.role,
+    redirectUrl
+  });
 });
 
 const getProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id).select('-passwordHash -otp -expiredin');
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  return res.json(user);
+});
+
+const uploadAvatar = asyncHandler(async (req, res) => {
+  const { avatar } = req.body;
+  if (!avatar) return res.status(400).json({ error: 'No avatar provided' });
+
+  // Update user document
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    { avatar },
+    { new: true }
+  ).select('-passwordHash -otp -expiredin');
+
   if (!user) return res.status(404).json({ error: 'User not found' });
   return res.json(user);
 });
@@ -115,4 +139,5 @@ module.exports = {
   resendOtp,
   loginUser,
   getProfile,
+  uploadAvatar,
 };

@@ -34,7 +34,18 @@ export default function Auth() {
 
   useEffect(() => {
     if (token) {
-      navigate('/dashboard');
+      // Check if user is admin and redirect accordingly
+      let userRole = 'user';
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          userRole = JSON.parse(userStr)?.role;
+        }
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+      const redirectUrl = userRole === 'admin' ? '/admin' : '/reservations';
+      navigate(redirectUrl);
     }
   }, [token, navigate]);
 
@@ -60,8 +71,8 @@ export default function Auth() {
       const data = await apiClient.post('/api/auth/login', {
         body: { username, password },
       });
-      login(data.token, { username: data.username });
-      navigate('/dashboard');
+      login(data.token, { username: data.username, role: data.role });
+      navigate(data.redirectUrl || '/reservations');
     } catch (error) {
       setMessage(error.message);
     }
