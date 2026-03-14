@@ -1,71 +1,91 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './Payment.module.css';
+import { apiClient } from '../services/apiClient';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const DEFAULT_RATE = 1200;
 
 export default function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { token } = useAuth();
 
   const reservation = location.state?.reservation;
   const amount = location.state?.amount ?? DEFAULT_RATE;
 
-  const [method, setMethod] = useState('esewa');
-  const [status, setStatus] = useState('idle');
+  const [status, setStatus] = useState('idle'); // idle | processing | success | error
   const [message, setMessage] = useState('');
+  const [method, setMethod] = useState('khalti');
 
   useEffect(() => {
     if (!reservation) {
-      setMessage('No reservation details found. Redirecting to dashboard...');
-      const timer = setTimeout(() => navigate('/dashboard'), 2000);
-      return () => clearTimeout(timer);
+      setMessage('No reservation details found. Redirecting…');
+      const t = setTimeout(() => navigate('/reservations'), 2500);
+      return () => clearTimeout(t);
     }
     return undefined;
   }, [reservation, navigate]);
 
-  const handlePayment = () => {
-    if (!reservation) return;
+  /* ── Khalti Payment ── */
+  const handleKhaltiPay = async () => {
+    if (!reservation?._id) {
+      setStatus('error');
+      setMessage('Reservation ID missing. Please try booking again.');
+      return;
+    }
     setStatus('processing');
     setMessage('');
+    try {
+      const data = await apiClient.post('/api/payment/initiate', {
+        token,
+        body: { reservationId: reservation._id },
+      });
+      // Redirect browser to Khalti's payment page
+      window.location.href = data.payment_url;
+    } catch (err) {
+      setStatus('error');
+      setMessage(err.message || 'Failed to initiate Khalti payment. Please try again.');
+    }
+  };
 
-    setTimeout(() => {
-      setStatus('success');
-      setMessage('Payment successful! Your futsal court is booked.');
-    }, 1200);
+  const handlePayment = () => {
+    if (method === 'khalti') {
+      handleKhaltiPay();
+    } else {
+      // Placeholder for other methods
+      setStatus('error');
+      setMessage(`${method} payment integration coming soon.`);
+    }
   };
 
   const summaryDetails = useMemo(() => {
     if (!reservation) return [];
     return [
       { label: 'Player', value: reservation.name },
-      { label: 'Date', value: reservation.date },
-      { label: 'Time slot', value: reservation.time },
+      { label: 'Court', value: reservation.court?.name || '—' },
+      { label: 'Date', value: reservation.date ? new Date(reservation.date).toLocaleDateString('en-GB') : '—' },
+      { label: 'Time', value: reservation.startTime && reservation.endTime ? `${reservation.startTime} – ${reservation.endTime}` : '—' },
       { label: 'Contact', value: reservation.contact },
-      { label: 'Amount due', value: `Rs ${amount}` },
+      { label: 'Amount due', value: `NPR ${amount}` },
     ];
   }, [reservation, amount]);
 
-  const paymentOptions = useMemo(
-    () => [
-      { value: 'esewa', label: 'eSewa', hint: 'Instant transfer' },
-      { value: 'khalti', label: 'Khalti', hint: 'Rewards eligible' },
-      { value: 'fonepay', label: 'FonePay', hint: 'Scan & pay' },
-    ],
-    []
-  );
+  const paymentOptions = [
+    { value: 'khalti', label: 'Khalti', hint: 'Rewards eligible · Recommended' },
+  ];
 
   return (
     <div className={styles.paymentShell}>
       <div className={styles.paymentCard}>
         <header className={styles.paymentHeader}>
-          <button className={styles.secondaryBtn} type="button" onClick={() => navigate('/dashboard')}>
-            Back to dashboard
+          <button className={styles.secondaryBtn} type="button" onClick={() => navigate('/reservations')}>
+            ← Back
           </button>
           <div>
-            <p className={styles.eyebrow}>Secure checkout</p>
+            <p className={styles.eyebrow}> Secure checkout</p>
             <h2>Complete your payment</h2>
-            <p className={styles.subtext}>Review your reservation and choose a preferred payment method.</p>
+            <p className={styles.subtext}>Review your reservation and pay with Khalti.</p>
           </div>
         </header>
 
@@ -77,7 +97,9 @@ export default function Payment() {
                   <p className={styles.eyebrow}>Reservation</p>
                   <h3>Summary</h3>
                 </div>
-                <span className={styles.badge}>{reservation.date}</span>
+                <span className={styles.badge}>
+                  {reservation.date ? new Date(reservation.date).toLocaleDateString('en-GB') : '—'}
+                </span>
               </div>
               <div className={styles.summaryGrid}>
                 {summaryDetails.map((item) => (
@@ -126,18 +148,23 @@ export default function Payment() {
                 onClick={handlePayment}
                 disabled={status === 'processing'}
               >
-                {status === 'processing' ? 'Processing...' : `Pay Rs ${amount} with ${method}`}
+                {status === 'processing'
+                  ? '⏳ Redirecting to Khalti…'
+                  : `Pay NPR ${amount} with ${method}`}
               </button>
               <p className={styles.helpText}>You will receive a confirmation SMS after successful payment.</p>
             </div>
+
             {message && (
-              <p className={`${styles.statusMessage} ${status === 'success' ? styles.success : styles.error}`}>
+              <p className={`${styles.statusMessage} ${status === 'error' ? styles.error : styles.success}`}>
                 {message}
               </p>
             )}
           </>
         ) : (
-          <p className={`${styles.statusMessage} ${styles.error}`}>{message || 'Missing reservation details.'}</p>
+          <p className={`${styles.statusMessage} ${styles.error}`}>
+            {message || 'Missing reservation details.'}
+          </p>
         )}
       </div>
     </div>
