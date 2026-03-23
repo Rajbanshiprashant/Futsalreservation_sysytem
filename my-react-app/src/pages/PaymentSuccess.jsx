@@ -67,7 +67,7 @@ export default function PaymentSuccess() {
         {status === 'success' && (
           <>
             <div className={styles.iconSuccess}>✓</div>
-            <h2 className={styles.title}>Booking Confirmed! 🎉</h2>
+            <h2 className={styles.title}>Booking Confirmed! </h2>
             <p className={styles.sub}>{message}</p>
             {txnId && (
               <div className={styles.txnBox}>
