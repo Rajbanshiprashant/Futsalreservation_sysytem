@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { FiX, FiSave } from 'react-icons/fi';
+import { FiX, FiSave, FiUpload, FiImage } from 'react-icons/fi';
+import { apiClient, API_BASE } from '../../services/apiClient';
+import { useAuth } from '../../context/AuthContext';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -186,9 +188,86 @@ const Button = styled.button`
       color: #667eea;
     }
   `}
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const ImageUploadArea = styled.div`
+  border: 2px dashed ${props => props.hasImage ? '#667eea' : '#e1e5e9'};
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: ${props => props.hasImage ? '#f8f7ff' : '#fafafa'};
+
+  &:hover {
+    border-color: #667eea;
+    background: #f8f7ff;
+  }
+`;
+
+const ImagePreview = styled.div`
+  position: relative;
+  margin-bottom: 12px;
+
+  img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+`;
+
+const RemoveImageButton = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 71, 87, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #ff4757;
+    transform: scale(1.1);
+  }
+`;
+
+const UploadIcon = styled.div`
+  font-size: 2rem;
+  color: #667eea;
+  margin-bottom: 8px;
+`;
+
+const UploadText = styled.p`
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+`;
+
+const UploadHint = styled.p`
+  margin: 4px 0 0;
+  color: #999;
+  font-size: 0.8rem;
 `;
 
 const CourtEditModal = ({ court, isOpen, onClose, onSave }) => {
+  const { token } = useAuth();
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     name: '',
     type: 'indoor',
@@ -202,6 +281,9 @@ const CourtEditModal = ({ court, isOpen, onClose, onSave }) => {
     imageUrl: ''
   });
 
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [featureInput, setFeatureInput] = useState('');
 
   useEffect(() => {
@@ -218,8 +300,15 @@ const CourtEditModal = ({ court, isOpen, onClose, onSave }) => {
         description: court.description || '',
         imageUrl: court.imageUrl || ''
       });
+      // Set existing image as preview
+      if (court.imageUrl) {
+        const fullUrl = court.imageUrl.startsWith('http') ? court.imageUrl : `${API_BASE}${court.imageUrl}`;
+        setImagePreviewUrl(fullUrl);
+      } else {
+        setImagePreviewUrl('');
+      }
+      setSelectedFile(null);
     } else {
-      // Reset form for new court
       setFormData({
         name: '',
         type: 'indoor',
@@ -232,6 +321,8 @@ const CourtEditModal = ({ court, isOpen, onClose, onSave }) => {
         description: '',
         imageUrl: ''
       });
+      setImagePreviewUrl('');
+      setSelectedFile(null);
     }
   }, [court]);
 
@@ -241,6 +332,30 @@ const CourtEditModal = ({ court, isOpen, onClose, onSave }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be under 5MB');
+        return;
+      }
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreviewUrl(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = (e) => {
+    e.stopPropagation();
+    setSelectedFile(null);
+    setImagePreviewUrl('');
+    setFormData(prev => ({ ...prev, imageUrl: '' }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const addFeature = () => {
@@ -260,9 +375,31 @@ const CourtEditModal = ({ court, isOpen, onClose, onSave }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave(formData);
+    setUploading(true);
+
+    try {
+      let finalImageUrl = formData.imageUrl;
+
+      // Upload image file if one was selected
+      if (selectedFile) {
+        const uploadData = new FormData();
+        uploadData.append('image', selectedFile);
+        const uploadResponse = await apiClient.upload('/api/admin/courts/upload-image', {
+          formData: uploadData,
+          token
+        });
+        finalImageUrl = uploadResponse.data.imageUrl;
+      }
+
+      onSave({ ...formData, imageUrl: finalImageUrl });
+    } catch (error) {
+      console.error('Error saving court:', error);
+      alert('Error saving court: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -326,7 +463,7 @@ const CourtEditModal = ({ court, isOpen, onClose, onSave }) => {
               />
             </FormGroup>
             <FormGroup>
-              <Label htmlFor="hourlyRate">Hourly Rate ($) *</Label>
+              <Label htmlFor="hourlyRate">Hourly Rate (RS) *</Label>
               <Input
                 id="hourlyRate"
                 name="hourlyRate"
@@ -352,15 +489,37 @@ const CourtEditModal = ({ court, isOpen, onClose, onSave }) => {
             />
           </FormGroup>
 
+          {/* Image Upload */}
           <FormGroup>
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input
-              id="imageUrl"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleChange}
-              placeholder="https://example.com/court-image.jpg"
+            <Label>Court Image</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              onChange={handleFileSelect}
+              style={{ display: 'none' }}
             />
+            <ImageUploadArea
+              hasImage={!!imagePreviewUrl}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {imagePreviewUrl ? (
+                <ImagePreview>
+                  <img src={imagePreviewUrl} alt="Court preview" />
+                  <RemoveImageButton type="button" onClick={handleRemoveImage}>
+                    <FiX />
+                  </RemoveImageButton>
+                </ImagePreview>
+              ) : (
+                <>
+                  <UploadIcon>
+                    <FiUpload />
+                  </UploadIcon>
+                  <UploadText>Click to upload a court image</UploadText>
+                  <UploadHint>JPG, PNG, GIF, or WebP — Max 5MB</UploadHint>
+                </>
+              )}
+            </ImageUploadArea>
           </FormGroup>
 
           <FormGroup>
@@ -433,9 +592,9 @@ const CourtEditModal = ({ court, isOpen, onClose, onSave }) => {
             <Button type="button" secondary onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" primary>
+            <Button type="submit" primary disabled={uploading}>
               <FiSave />
-              {court ? 'Update Court' : 'Create Court'}
+              {uploading ? 'Uploading...' : court ? 'Update Court' : 'Create Court'}
             </Button>
           </ButtonGroup>
         </Form>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Reservations.module.css';
-import { apiClient } from '../services/apiClient';
+import { apiClient, API_BASE } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext.jsx';
 
 /* ── Helpers ── */
@@ -323,7 +323,15 @@ export default function Reservations() {
                       onClick={() => setCourtId(court._id)}
                     >
                       <div className={styles.courtCardTop}>
-                        <div className={styles.courtTurf} />
+                        {court.imageUrl ? (
+                          <img
+                            src={court.imageUrl.startsWith('http') ? court.imageUrl : `${API_BASE}${court.imageUrl}`}
+                            alt={court.name}
+                            className={styles.courtImage}
+                          />
+                        ) : (
+                          <div className={styles.courtTurf} />
+                        )}
                       </div>
                       <div className={styles.courtCardBody}>
                         <p className={styles.courtName}>{court.name}</p>
@@ -438,7 +446,15 @@ export default function Reservations() {
               <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>✅ Review Booking</h2>
                 <div className={styles.reviewCard}>
-                  <div className={styles.reviewTurf} />
+                  {selectedCourt?.imageUrl ? (
+                    <img
+                      src={selectedCourt.imageUrl.startsWith('http') ? selectedCourt.imageUrl : `${API_BASE}${selectedCourt.imageUrl}`}
+                      alt={selectedCourt.name}
+                      className={styles.reviewImage}
+                    />
+                  ) : (
+                    <div className={styles.reviewTurf} />
+                  )}
                   <div className={styles.reviewRows}>
                     <div className={styles.reviewRow}><span>Court</span><strong>{selectedCourt?.name}</strong></div>
                     <div className={styles.reviewRow}>
@@ -507,7 +523,14 @@ export default function Reservations() {
           {/* ── Right: Booking Summary ── */}
           <aside className={styles.summary}>
             <h3 className={styles.summaryTitle}>Booking Summary</h3>
-            <div className={styles.summaryTurf}>
+            <div className={styles.summaryTurf} style={selectedCourt?.imageUrl ? { background: 'none' } : {}}>
+              {selectedCourt?.imageUrl && (
+                <img
+                  src={selectedCourt.imageUrl.startsWith('http') ? selectedCourt.imageUrl : `${API_BASE}${selectedCourt.imageUrl}`}
+                  alt={selectedCourt.name}
+                  className={styles.summaryImage}
+                />
+              )}
               {selectedCourt && <span className={styles.summaryCourtName}>{selectedCourt.name}</span>}
             </div>
             <div className={styles.summaryRows}>

@@ -28,12 +28,36 @@ const request = async (endpoint, { method = 'GET', body, token, headers = {} } =
   return data;
 };
 
+const uploadRequest = async (endpoint, { formData, token } = {}) => {
+  const config = {
+    method: 'POST',
+    body: formData,
+    headers: {},
+  };
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE}${endpoint}`, config);
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const errorMessage = data.error || data.message || 'Upload failed';
+    throw new Error(errorMessage);
+  }
+
+  return data;
+};
+
 export const apiClient = {
   get: (endpoint, options) => request(endpoint, { ...options, method: 'GET' }),
   post: (endpoint, options) => request(endpoint, { ...options, method: 'POST' }),
   put: (endpoint, options) => request(endpoint, { ...options, method: 'PUT' }),
   patch: (endpoint, options) => request(endpoint, { ...options, method: 'PATCH' }),
   delete: (endpoint, options) => request(endpoint, { ...options, method: 'DELETE' }),
+  upload: (endpoint, options) => uploadRequest(endpoint, options),
 };
 
 export { API_BASE };
+

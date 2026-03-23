@@ -361,6 +361,12 @@
     linear-gradient(135deg, #1a5c2a, #237a38, #1a5c2a, #2a9448);
 }
 
+.courtImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .courtCardBody {
   padding: 0.9rem 1rem;
 }
@@ -580,6 +586,12 @@
     linear-gradient(135deg, #1a5c2a, #237a38, #1a5c2a, #2a9448);
 }
 
+.reviewImage {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+}
+
 .reviewRows { padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.85rem; }
 
 .reviewRow {
@@ -696,6 +708,16 @@
   display: flex;
   align-items: flex-end;
   padding: 0.75rem;
+}
+
+.summaryImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
 }
 
 .summaryCourtName {

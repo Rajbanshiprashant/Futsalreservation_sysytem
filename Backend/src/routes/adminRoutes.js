@@ -1,9 +1,57 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const isAdmin = require('../middleware/adminAuth');
+
+// Multer configuration for court image uploads
+const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'courts');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const uniqueName = `court_${Date.now()}_${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
+    cb(null, uniqueName);
+  }
+});
+
+const fileFilter = (_req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|gif|webp/;
+  const extOk = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimeOk = allowedTypes.test(file.mimetype);
+  if (extOk && mimeOk) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files (jpg, png, gif, webp) are allowed'));
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+});
 
 // Apply admin middleware to all admin routes
 router.use(isAdmin);
+
+// Upload court image
+router.post('/courts/upload-image', upload.single('image'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No image file provided' });
+    }
+    const imageUrl = `/uploads/courts/${req.file.filename}`;
+    res.json({ success: true, data: { imageUrl } });
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({ success: false, message: 'Error uploading image' });
+  }
+});
 
 // Get admin dashboard stats
 router.get('/stats', async (req, res) => {

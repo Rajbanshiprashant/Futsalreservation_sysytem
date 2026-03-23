@@ -12,7 +12,7 @@ const Reservation = require('../models/Reservation');
 // ──────────────────────────────────────────────
 router.post('/initiate', authMiddleware, asyncHandler(async (req, res) => {
   const { reservationIds, reservationId } = req.body;
-  
+
   // Support either single ID (legacy) or array of IDs (multi-day booking)
   const ids = reservationIds || (reservationId ? [reservationId] : []);
 
@@ -35,24 +35,31 @@ router.post('/initiate', authMiddleware, asyncHandler(async (req, res) => {
 
   // Sum up the total price across all the matched booking segments
   const totalSum = reservations.reduce((sum, r) => sum + r.totalPrice, 0);
-  const amountPaisa = Math.round(totalSum * 100); // NPR to paisa
+  const amountPaisa = Math.round(totalSum * 100); // NPR to paisa (must be integer)
 
   // Setup Khalti metadata
   const firstRes = reservations[0];
+
+  // Khalti requires a valid phone number (10 digits) — use a fallback if invalid
+  const rawPhone = (firstRes.contact || '').replace(/\D/g, '');
+  const customerPhone = rawPhone.length >= 10 ? rawPhone.slice(-10) : '9800000000';
+
   const khaltiPayload = {
     return_url: `${FRONTEND_URL}/payment/success`,
     website_url: FRONTEND_URL,
     amount: amountPaisa,
-    purchase_order_id: firstRes._id.toString(), // Khalti limits length, so just pass the primary/first ID
+    purchase_order_id: firstRes._id.toString(),
     purchase_order_name: `Futsal Booking (${reservations.length} days) - ${firstRes.court?.name || 'Court'}`,
     customer_info: {
-      name: firstRes.name,
+      name: firstRes.name || 'Customer',
       email: firstRes.user?.email || 'customer@himalayan.com',
-      phone: firstRes.contact,
+      phone: customerPhone,
     },
   };
 
-  const khaltiResponse = await fetch('https://a.khalti.com/api/v2/epayment/initiate/', {
+  console.log('Khalti payload:', JSON.stringify(khaltiPayload, null, 2));
+
+  const khaltiResponse = await fetch('https://dev.khalti.com/api/v2/epayment/initiate/', {
     method: 'POST',
     headers: {
       'Authorization': `Key ${KHALTI_SECRET_KEY}`,
@@ -63,7 +70,7 @@ router.post('/initiate', authMiddleware, asyncHandler(async (req, res) => {
 
   if (!khaltiResponse.ok) {
     const errData = await khaltiResponse.json().catch(() => ({}));
-    console.error('Khalti initiate error:', errData);
+    console.error('Khalti initiate error:', JSON.stringify(errData, null, 2));
     return res.status(502).json({ error: 'Failed to initiate Khalti payment', details: errData });
   }
 
@@ -95,7 +102,7 @@ router.post('/verify', authMiddleware, asyncHandler(async (req, res) => {
   }
 
   // Lookup payment status from Khalti
-  const lookupResponse = await fetch('https://a.khalti.com/api/v2/epayment/lookup/', {
+  const lookupResponse = await fetch('https://dev.khalti.com/api/v2/epayment/lookup/', {
     method: 'POST',
     headers: {
       'Authorization': `Key ${KHALTI_SECRET_KEY}`,

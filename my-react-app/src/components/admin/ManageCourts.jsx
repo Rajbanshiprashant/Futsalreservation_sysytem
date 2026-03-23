@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FiPlus, FiEdit2, FiTrash2, FiEye, FiSettings, FiMapPin, FiX } from 'react-icons/fi';
-import { apiClient } from '../../services/apiClient';
+import { apiClient, API_BASE } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
 import CourtEditModal from './CourtEditModal';
 
@@ -63,13 +63,20 @@ const CourtCard = styled.div`
 
 const CourtImage = styled.div`
   height: 200px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: ${props => props.hasImage ? 'none' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 3rem;
   position: relative;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const CourtStatus = styled.div`
@@ -199,13 +206,13 @@ const ManageCourts = () => {
         setLoading(true);
         const response = await apiClient.get('/api/admin/courts', { token });
         setCourts(response.data);
-        
+
         // Calculate stats
         const total = response.data.length;
         const available = response.data.filter(c => c.available && !c.maintenanceMode).length;
         const maintenance = response.data.filter(c => c.maintenanceMode).length;
         const occupied = response.data.filter(c => !c.available && !c.maintenanceMode).length;
-        
+
         setStats({ total, available, maintenance, occupied });
       } catch (error) {
         console.error('Error fetching courts:', error);
@@ -250,13 +257,13 @@ const ManageCourts = () => {
     try {
       const court = courts.find(c => c._id === id);
       const newAvailability = !court.available;
-      
-      await apiClient.patch(`/api/admin/courts/${id}/availability`, { 
+
+      await apiClient.patch(`/api/admin/courts/${id}/availability`, {
         body: { available: newAvailability },
-        token 
+        token
       });
-      
-      setCourts(courts.map(c => 
+
+      setCourts(courts.map(c =>
         c._id === id ? { ...c, available: newAvailability } : c
       ));
     } catch (error) {
@@ -282,7 +289,7 @@ const ManageCourts = () => {
         });
         setCourts([...courts, response.data]);
       }
-      
+
       setShowEditModal(false);
       setEditingCourt(null);
     } catch (error) {
@@ -328,8 +335,15 @@ const ManageCourts = () => {
       <CourtsGrid>
         {courts.map((court) => (
           <CourtCard key={court._id}>
-            <CourtImage>
-              <FiSettings />
+            <CourtImage hasImage={!!court.imageUrl}>
+              {court.imageUrl ? (
+                <img
+                  src={court.imageUrl.startsWith('http') ? court.imageUrl : `${API_BASE}${court.imageUrl}`}
+                  alt={court.name}
+                />
+              ) : (
+                <FiSettings />
+              )}
               <CourtStatus available={court.available && !court.maintenanceMode}>
                 {court.maintenanceMode ? 'Maintenance' : court.available ? 'Available' : 'Occupied'}
               </CourtStatus>
@@ -345,7 +359,7 @@ const ManageCourts = () => {
                   Capacity: {court.capacity} players
                 </InfoItem>
                 <InfoItem>
-                  ${court.hourlyRate}/hour
+                  Rs{court.hourlyRate}/hour
                 </InfoItem>
                 {court.currentOccupancy > 0 && (
                   <InfoItem>
@@ -376,7 +390,7 @@ const ManageCourts = () => {
           </CourtCard>
         ))}
       </CourtsGrid>
-      
+
       <CourtEditModal
         court={editingCourt}
         isOpen={showEditModal}
