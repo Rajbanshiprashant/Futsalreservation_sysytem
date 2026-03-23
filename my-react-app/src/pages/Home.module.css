@@ -8,6 +8,9 @@
 .heroSection {
   background: linear-gradient(90deg, #f3fff7 0%, #e5f9ff 55%, #d1f1d9 100%);
   padding: clamp(1.5rem, 4vw, 3rem) clamp(1.5rem, 6vw, 5rem);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .heroNav {
@@ -50,6 +53,7 @@
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 2.5rem;
   align-items: center;
+  flex: 1;
 }
 
 .heroTitle {
@@ -86,6 +90,10 @@
 }
 
 .primaryCta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: none;
   background: #21b66f;
   color: #fff;
@@ -95,9 +103,20 @@
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 12px 25px rgba(33, 182, 111, 0.32);
+  transition: all 0.3s ease;
+}
+
+.primaryCta:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(33, 182, 111, 0.45);
+  background: #1da362;
 }
 
 .ghostBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: 2px solid rgba(33, 182, 111, 0.4);
   background: transparent;
   color: #178c4c;
@@ -105,6 +124,17 @@
   border-radius: 999px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.ghostBtn:hover {
+  background: rgba(33, 182, 111, 0.1);
+  border-color: #21b66f;
+  transform: translateY(-3px);
+}
+
+.btnIcon {
+  font-size: 1.1rem;
 }
 
 .heroVisual {

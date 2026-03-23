@@ -424,10 +424,7 @@ body {
   margin: 0;
 }
 
-input{
-  background-color: #fff !important;
-  color: #1d7d3f !important;
-}
+/* Input styles are scoped per page component */
 
 @media (max-width: 760px) {
   .hero-card {
