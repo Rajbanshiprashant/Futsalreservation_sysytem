@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FiHome, FiCalendar, FiUsers, FiSettings, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
+import { FiHome, FiCalendar, FiUsers, FiSettings, FiLogOut, FiMenu, FiX, FiGrid } from 'react-icons/fi';
 import AdminDashboard from '../components/admin/AdminDashboard';
 import ManageReservations from '../components/admin/ManageReservations';
 import ManageUsers from '../components/admin/ManageUsers';
@@ -133,7 +133,7 @@ const Admin = () => {
     { id: 'dashboard', label: 'Dashboard', icon: FiHome },
     { id: 'reservations', label: 'Reservations', icon: FiCalendar },
     { id: 'users', label: 'Users', icon: FiUsers },
-    { id: 'courts', label: 'Courts', icon: FiSettings },
+    { id: 'courts', label: 'Courts', icon: FiGrid },
     { id: 'settings', label: 'Settings', icon: FiSettings },
   ];
 
