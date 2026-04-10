@@ -132,7 +132,7 @@ export default function Reservations() {
 
         total += Math.round(basePrice * dailyMultiplier);
     }
-
+// peakCount and weekendCount are used to generate a clear breakdown of the surcharges applied based on the user's selections. This way, users can see exactly how the final price is derived from the base price and the specific rules that apply to their booking.
     if (weekendCount > 0) breakdown.push({ label: `Weekend Surcharge (x${weekendCount} days)`, value: 'x1.2' });
     if (peakCount > 0) breakdown.push({ label: `Peak Hour Surcharge (x${peakCount} days)`, value: 'x1.5' });
 

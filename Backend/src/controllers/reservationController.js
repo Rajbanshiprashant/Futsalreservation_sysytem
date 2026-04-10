@@ -1,11 +1,11 @@
-const {isFuture} = require("date-fns");
+const { isFuture } = require("date-fns");
 const Reservation = require('../models/Reservation');
 const Court = require('../models/Court');
 const asyncHandler = require('../utils/asyncHandler');
 
 const createReservation = asyncHandler(async (req, res) => {
   const { name, date, startTime, endTime, contact, courtId, totalPrice, days = 1 } = req.body;
-  
+
   if (!name || !date || !startTime || !endTime || !contact || !courtId) {
     return res.status(400).json({ error: 'All fields are required' });
   }
@@ -14,8 +14,8 @@ const createReservation = asyncHandler(async (req, res) => {
   const formattedStartTime = startTime.split(':').map(comp => comp.padStart(2, '0')).join(':');
   const formattedEndTime = endTime.split(':').map(comp => comp.padStart(2, '0')).join(':');
 
-  if(!isFuture(new Date(date))){
-    return res.status(400).json({error:"Invalid Date for reservation"});
+  if (!isFuture(new Date(date))) {
+    return res.status(400).json({ error: "Invalid Date for reservation" });
   }
 
   // Check if court exists and is available
@@ -48,8 +48,8 @@ const createReservation = asyncHandler(async (req, res) => {
    * requested week to guarantee that no conflicting reservations exist in the system.
    */
   const conflicts = await Promise.all(bookingDates.map(d => {
-    return Reservation.findOne({ 
-      court: courtId, 
+    return Reservation.findOne({
+      court: courtId,
       date: d,
       $or: [
         { startTime: { $lt: formattedEndTime }, endTime: { $gt: formattedStartTime } }
@@ -58,9 +58,9 @@ const createReservation = asyncHandler(async (req, res) => {
   }));
 
   const hasConflict = conflicts.some(c => c !== null);
-  
-  if(hasConflict){
-    return res.status(409).json({error:`Selected time slot is already booked for one or more of the selected days.`});
+
+  if (hasConflict) {
+    return res.status(409).json({ error: `Selected time slot is already booked for one or more of the selected days.` });
   }
 
   // Create all reservations
@@ -82,10 +82,10 @@ const createReservation = asyncHandler(async (req, res) => {
   await firstReservation.populate('user', 'username email');
   await firstReservation.populate('court', 'name type location');
 
-  return res.status(201).json({ 
-    message: numDays > 1 ? `Successfully booked for ${numDays} consecutive days` : 'Reservation saved', 
-    reservation: firstReservation, 
-    allReservations: reservations 
+  return res.status(201).json({
+    message: numDays > 1 ? `Successfully booked for ${numDays} consecutive days` : 'Reservation saved',
+    reservation: firstReservation,
+    allReservations: reservations
   });
 });
 

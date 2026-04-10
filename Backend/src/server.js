@@ -10,7 +10,7 @@ const startServer = async () => {
   try {
     await connectDB();
     server.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(` Server is running on port ${PORT}`);
       
       // Background Sweeper: Auto-cancel pending reservations older than 30 mins
       setInterval(async () => {
@@ -21,7 +21,7 @@ const startServer = async () => {
             { $set: { status: 'cancelled' } }
           );
           if (result.modifiedCount > 0) {
-            console.log(`🧹 Auto-cancelled ${result.modifiedCount} expired pending reservations.`);
+            console.log(` Auto-cancelled ${result.modifiedCount} expired pending reservations.`);
           }
         } catch (err) {
           console.error('Sweeper error:', err);
@@ -30,7 +30,7 @@ const startServer = async () => {
       
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error.message);
+    console.error(' Failed to start server:', error.message);
     process.exit(1);
   }
 };
