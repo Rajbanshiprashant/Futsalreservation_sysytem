@@ -128,36 +128,36 @@ export default function Reservations() {
     if (!selectedDate || !selectedSlot) return { total: baseHourly * durationHours, breakdown, baseHourly };
 
     for (let i = 0; i < durationDays; i++) {
-        let dailyMultiplier = 1;
-        const d = new Date(selectedDate);
-        d.setDate(d.getDate() + i);
+      let dailyMultiplier = 1;
+      const d = new Date(selectedDate);
+      d.setDate(d.getDate() + i);
 
-        // Rule 1: Weekend Surcharge
-        const dayOfWeek = d.getDay();
-        if (dayOfWeek === 0 || dayOfWeek === 6) {
-            dailyMultiplier *= 1.2;
-            weekendCount++;
-        }
+      // Rule 1: Weekend Surcharge
+      const dayOfWeek = d.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        dailyMultiplier *= 1.2;
+        weekendCount++;
+      }
 
-        // Rule 2: Peak Hour Surcharge — check if ANY hour in the session is peak
-        const startHour = parseInt(selectedSlot.split(':')[0], 10);
-        let sessionHasPeak = false;
-        for (let h = startHour; h < startHour + durationHours; h++) {
-          if (h >= 17 && h <= 21) { sessionHasPeak = true; peakHours++; }
-        }
-        if (sessionHasPeak) { dailyMultiplier *= 1.5; peakCount++; }
+      // Rule 2: Peak Hour Surcharge — check if ANY hour in the session is peak
+      const startHour = parseInt(selectedSlot.split(':')[0], 10);
+      let sessionHasPeak = false;
+      for (let h = startHour; h < startHour + durationHours; h++) {
+        if (h >= 17 && h <= 21) { sessionHasPeak = true; peakHours++; }
+      }
+      if (sessionHasPeak) { dailyMultiplier *= 1.5; peakCount++; }
 
-        total += Math.round(baseHourly * durationHours * dailyMultiplier);
+      total += Math.round(baseHourly * durationHours * dailyMultiplier);
     }
     // peakCount and weekendCount are used to generate a clear breakdown
     if (weekendCount > 0) breakdown.push({ label: `Weekend Surcharge (x${weekendCount} days)`, value: 'x1.2' });
     if (peakCount > 0) breakdown.push({ label: `Peak Hour Surcharge (x${peakCount} days)`, value: 'x1.5' });
     if (durationHours > 1) breakdown.push({ label: `Duration`, value: `x${durationHours} hrs` });
 
-    return { 
-      baseHourly, 
+    return {
+      baseHourly,
       total,
-      breakdown 
+      breakdown
     };
   };
 
@@ -391,7 +391,12 @@ export default function Reservations() {
                     </span>
                   </h2>
                   <div className={styles.slotGrid}>
-                    {TIME_SLOTS.map((slot) => {
+                    {TIME_SLOTS.filter((slot) => {
+                      const todayISO = new Date().toISOString().slice(0, 10);
+                      if (selectedDate !== todayISO) return true;
+                      const slotHour = parseInt(slot.split(':')[0], 10);
+                      return slotHour > new Date().getHours();
+                    }).map((slot) => {
                       const isBooked = bookedSlots.has(slot);
                       const isSelected = selectedSlot === slot;
                       return (
@@ -442,17 +447,17 @@ export default function Reservations() {
                         Book this same slot for multiple consecutive days?
                       </p>
                       <div className={styles.durationSelector}>
-                        {[{days: 1, label: 'Just once'}, {days: 7, label: 'Whole Week'}, {days: 14, label: 'Two Weeks'}].map(opt => (
-                          <label 
-                            key={opt.days} 
+                        {[{ days: 1, label: 'Just once' }, { days: 7, label: 'Whole Week' }, { days: 14, label: 'Two Weeks' }].map(opt => (
+                          <label
+                            key={opt.days}
                             className={`${styles.durationLabel} ${durationDays === opt.days ? styles.durationActive : ''}`}
                           >
-                            <input 
-                              type="radio" 
-                              name="durationDays" 
-                              value={opt.days} 
-                              checked={durationDays === opt.days} 
-                              onChange={() => setDurationDays(opt.days)} 
+                            <input
+                              type="radio"
+                              name="durationDays"
+                              value={opt.days}
+                              checked={durationDays === opt.days}
+                              onChange={() => setDurationDays(opt.days)}
                               style={{ display: 'none' }}
                             />
                             <div className={styles.durationContent}>
@@ -520,7 +525,7 @@ export default function Reservations() {
                     <span>Base Hourly Rate</span>
                     <span>Rs. {pricing.baseHourly}</span>
                   </div>
-                  
+
                   {pricing.breakdown.map((item, idx) => (
                     <div key={idx} className={styles.summaryRow} style={{ color: '#f97316' }}>
                       <span>{item.label}</span>

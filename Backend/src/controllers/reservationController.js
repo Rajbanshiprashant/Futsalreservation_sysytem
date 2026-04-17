@@ -24,8 +24,11 @@ const createReservation = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Booking duration must be at least 1 hour and end time must be after start time.' });
   }
 
-  if (!isFuture(new Date(date))) {
-    return res.status(400).json({ error: "Invalid Date for reservation" });
+  const bookingDateStr = new Date(date).toISOString().slice(0, 10);
+  const startDateTime = new Date(`${bookingDateStr}T${formattedStartTime}:00`);
+
+  if (!isFuture(startDateTime)) {
+    return res.status(400).json({ error: "Invalid reservation time. The selected time is in the past." });
   }
 
   // Check if court exists and is available
@@ -154,10 +157,10 @@ const cancelReservationUser = asyncHandler(async (req, res) => {
    * Deduct 20% as a cancellation fee; refund 80% of the paid price.
    */
   const cancellationFee = Math.round(reservation.totalPrice * 0.20);
-  const refundAmount    = Math.round(reservation.totalPrice * 0.80);
+  const refundAmount = Math.round(reservation.totalPrice * 0.80);
 
-  reservation.status       = 'cancelled';
-  reservation.cancelledAt  = now;
+  reservation.status = 'cancelled';
+  reservation.cancelledAt = now;
   reservation.refundAmount = refundAmount;
   await reservation.save();
 
