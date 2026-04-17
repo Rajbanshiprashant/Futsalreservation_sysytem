@@ -73,6 +73,18 @@ router.get('/stats', async (req, res) => {
     ]);
     const totalRevenue = revenueData[0]?.total || 0;
     
+    // Get today's revenue (confirmed reservations created today)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const dailyRevenueData = await Reservation.aggregate([
+      { $match: { status: 'confirmed', createdAt: { $gte: todayStart, $lte: todayEnd } } },
+      { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+    ]);
+    const dailyRevenue = dailyRevenueData[0]?.total || 0;
+
     // Get active courts
     const activeCourts = await Court.countDocuments({ 
       available: true, 
@@ -85,6 +97,7 @@ router.get('/stats', async (req, res) => {
         totalUsers,
         totalReservations,
         totalRevenue,
+        dailyRevenue,
         activeCourts
       }
     });

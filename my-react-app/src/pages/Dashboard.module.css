@@ -426,3 +426,216 @@
 .mutedText {
   color: #7a6a5a;
 }
+
+/* ── Cancelled booking card variant ── */
+.bookingCardCancelled {
+  opacity: 0.7;
+  border-color: rgba(248,113,113,0.2) !important;
+}
+
+/* ── 12-hour cutoff warning ── */
+.cutoffWarning {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #fbbf24;
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.2);
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  display: inline-block;
+}
+
+.cutoffPast {
+  color: #f87171;
+  background: rgba(248,113,113,0.08);
+  border-color: rgba(248,113,113,0.2);
+}
+
+/* ── Refund badge on cancelled cards ── */
+.refundBadge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #34d399;
+  background: rgba(52,211,153,0.1);
+  border: 1px solid rgba(52,211,153,0.25);
+  border-radius: 8px;
+  padding: 0.25rem 0.6rem;
+}
+
+/* ── Cancellation Modal ── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 100;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.cancelModal {
+  background: #221910;
+  border: 1px solid #3d3020;
+  border-radius: 24px;
+  padding: 2rem;
+  width: min(420px, 100%);
+  box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+  animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modalEyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #f87171;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #f5ede4;
+}
+
+.modalSub {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #9b8d7d;
+}
+
+/* ── Refund Breakdown Table ── */
+.refundBreakdown {
+  background: #1a1209;
+  border: 1px solid #2d2218;
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.refundRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #c4b09a;
+}
+
+.refundTotal {
+  border-top: 1px solid #2d2218;
+  padding-top: 0.65rem;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #34d399 !important;
+}
+
+.refundNote {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #6b5d4f;
+  line-height: 1.5;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.modalBack {
+  flex: 1;
+  background: transparent;
+  border: 1px solid #3d3020;
+  color: #9b8d7d;
+  padding: 0.85rem;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modalBack:hover:not(:disabled) { border-color: #6b5030; color: #c4b09a; }
+
+.modalConfirmRed {
+  flex: 2;
+  background: #dc2626;
+  border: none;
+  color: #fff;
+  padding: 0.9rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(220,38,38,0.35);
+  transition: all 0.2s;
+}
+
+.modalConfirmRed:hover:not(:disabled) { background: #b91c1c; }
+.modalConfirmRed:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Success Toast ── */
+.toastOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  cursor: pointer;
+  animation: fadeIn 0.2s ease;
+}
+
+.toast {
+  background: #1e2d20;
+  border: 1px solid rgba(52,211,153,0.35);
+  border-radius: 20px;
+  padding: 2rem;
+  width: min(360px, 90%);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.toastIcon { font-size: 2.5rem; margin: 0; }
+
+.toastTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #34d399;
+}
+
+.toastBody {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #c4b09a;
+}
+
+.toastSub {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: #5a4a3a;
+}

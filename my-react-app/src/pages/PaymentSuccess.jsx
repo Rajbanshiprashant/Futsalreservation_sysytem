@@ -10,23 +10,15 @@ export default function PaymentSuccess() {
   const { token } = useAuth();
 
   const [status, setStatus] = useState('verifying'); // verifying | success | failed
-  const [message, setMessage] = useState('Verifying your payment with Khalti…');
+  const [message, setMessage] = useState('Verifying your payment…');
   const [txnId, setTxnId] = useState('');
 
   useEffect(() => {
-    const pidx = searchParams.get('pidx');
-    const paymentStatus = searchParams.get('status');
+    const sessionId = searchParams.get('session_id');
 
-    if (!pidx) {
+    if (!sessionId) {
       setStatus('failed');
-      setMessage('No payment ID found. Please contact support.');
-      return;
-    }
-
-    // Khalti sends status=Completed in URL for successful payments
-    if (paymentStatus && paymentStatus !== 'Completed') {
-      setStatus('failed');
-      setMessage(`Payment was not completed. Status: ${paymentStatus}`);
+      setMessage('No payment session found. Please contact support.');
       return;
     }
 
@@ -35,7 +27,7 @@ export default function PaymentSuccess() {
       try {
         const data = await apiClient.post('/api/payment/verify', {
           token,
-          body: { pidx },
+          body: { sessionId },
         });
 
         if (data.success) {

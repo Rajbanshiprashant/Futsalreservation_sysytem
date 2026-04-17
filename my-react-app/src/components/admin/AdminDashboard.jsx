@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FiUsers, FiCalendar, FiTrendingUp, FiDollarSign } from 'react-icons/fi';
+import { FiUsers, FiCalendar, FiTrendingUp } from 'react-icons/fi';
 import { apiClient } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
 
@@ -95,8 +95,22 @@ const ActivityStatus = styled.span`
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 600;
-  background: ${props => props.status === 'completed' ? '#d4edda' : '#fff3cd'};
-  color: ${props => props.status === 'completed' ? '#155724' : '#856404'};
+  background: ${
+    props => ({
+      confirmed:  '#d4edda',
+      completed:  '#d4edda',
+      cancelled:  '#fde8e8',
+      pending:    '#fff3cd',
+    }[props.status] || '#fff3cd')
+  };
+  color: ${
+    props => ({
+      confirmed:  '#155724',
+      completed:  '#155724',
+      cancelled:  '#842029',
+      pending:    '#856404',
+    }[props.status] || '#856404')
+  };
 `;
 
 const AdminDashboard = () => {
@@ -105,6 +119,7 @@ const AdminDashboard = () => {
     totalUsers: 0,
     totalReservations: 0,
     totalRevenue: 0,
+    dailyRevenue: 0,
     activeCourts: 0
   });
 
@@ -125,12 +140,18 @@ const AdminDashboard = () => {
         const reservations = reservationsResponse.data.slice(0, 5);
         
         // Transform reservations into activity items
+        const statusColor = {
+          confirmed:  '#28a745',
+          completed:  '#28a745',
+          cancelled:  '#dc3545',
+          pending:    '#ffc107',
+        };
         const activityItems = reservations.map(reservation => ({
           id: reservation._id,
           title: `New reservation by ${reservation.user?.username || 'Unknown User'}`,
           time: new Date(reservation.createdAt).toLocaleString(),
-          status: reservation.status === 'confirmed' ? 'completed' : 'pending',
-          color: reservation.status === 'confirmed' ? '#28a745' : '#ffc107'
+          status: reservation.status || 'pending',
+          color: statusColor[reservation.status] || '#ffc107'
         }));
 
         setRecentActivity(activityItems);
@@ -175,10 +196,18 @@ const AdminDashboard = () => {
 
         <StatCard color="#4facfe" colorDark="#00f2fe">
           <StatHeader>
-            <StatIcon><FiDollarSign /></StatIcon>
+            <StatIcon><span style={{ fontSize: '1.6rem', fontWeight: 700, lineHeight: 1 }}>रू</span></StatIcon>
           </StatHeader>
-          <StatValue>${stats.totalRevenue.toLocaleString()}</StatValue>
+          <StatValue>NRS {Math.round(stats.totalRevenue).toLocaleString()}</StatValue>
           <StatLabel>Total Revenue</StatLabel>
+        </StatCard>
+
+        <StatCard color="#f7971e" colorDark="#ffd200">
+          <StatHeader>
+            <StatIcon><span style={{ fontSize: '1.6rem', fontWeight: 700, lineHeight: 1 }}>रू</span></StatIcon>
+          </StatHeader>
+          <StatValue>NRS {Math.round(stats.dailyRevenue).toLocaleString()}</StatValue>
+          <StatLabel>Today's Revenue</StatLabel>
         </StatCard>
 
         <StatCard color="#43e97b" colorDark="#38f9d7">

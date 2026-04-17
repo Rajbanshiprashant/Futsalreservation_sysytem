@@ -11,6 +11,20 @@ const TIME_SLOTS = [
   '18:00', '19:00', '20:00', '21:00',
 ];
 
+// Add N hours to a 'HH:MM' string
+function addHours(timeStr, hours) {
+  const [h, m] = timeStr.split(':').map(Number);
+  const total = h + hours;
+  if (total > 23) return '23:00'; // cap at 11pm
+  return `${String(total).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+// How many whole hours a slot can support before 22:00
+function maxHoursForSlot(slot) {
+  const [h] = slot.split(':').map(Number);
+  return Math.max(1, Math.min(6, 22 - h));
+}
+
 function fmt12(t) {
   const [h, m] = t.split(':').map(Number);
   const ampm = h < 12 ? 'AM' : 'PM';
@@ -50,6 +64,7 @@ export default function Reservations() {
   const [courtId, setCourtId] = useState('');
   const [selectedDate, setSelectedDate] = useState(getNext14Days()[0].iso);
   const [selectedSlot, setSelectedSlot] = useState(''); // e.g. "08:00"
+  const [durationHours, setDurationHours] = useState(1); // 1-6 hours per session
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [durationDays, setDurationDays] = useState(1);
@@ -60,8 +75,7 @@ export default function Reservations() {
 
   /* ── Data ── */
   const [courts, setCourts] = useState([]);
-  const [existingReservations, setExistingReservations] = useState([]);
-  const [allReservations, setAllReservations] = useState([]); // for booked-slot detection
+  const [courtAvailability, setCourtAvailability] = useState([]); // booked intervals from server
 
   const days = useMemo(() => getNext14Days(), []);
 
@@ -72,44 +86,46 @@ export default function Reservations() {
     apiClient.get('/api/courts').then(d => setCourts(d.data || [])).catch(console.error);
   }, []);
 
+  /* Fetch ALL bookings for the selected court+date from the public availability endpoint.
+   * This runs whenever the user picks a different court or date so every user sees
+   * the same accurate picture of which slots are already taken. */
   useEffect(() => {
-    if (!token) return;
-    apiClient.get('/api/reservations', { token })
-      .then(d => setExistingReservations(Array.isArray(d) ? d : []))
-      .catch(console.error);
-  }, [token]);
+    if (!courtId || !selectedDate) {
+      setCourtAvailability([]);
+      return;
+    }
+    apiClient
+      .get(`/api/reservations/availability?courtId=${courtId}&date=${selectedDate}`)
+      .then(data => setCourtAvailability(Array.isArray(data) ? data : []))
+      .catch(err => {
+        console.error('Failed to load availability:', err);
+        setCourtAvailability([]);
+      });
+  }, [courtId, selectedDate]);
 
-  /* Also fetch admin reservations to mark booked slots (public courts already booked) */
-  useEffect(() => {
-    if (!courtId || !selectedDate) return;
-    // We'll just use the current user's existing reservations + server conflict check
-    // Show slots that belong to the selected court + date as booked
-    setAllReservations(existingReservations.filter(
-      r => r.court?._id === courtId || r.court === courtId
-    ));
-  }, [courtId, selectedDate, existingReservations]);
-
-  /* ── Booked slots ── */
+  /* ── Booked slots: build a Set of every hour that is covered by any booking ── */
   const bookedSlots = useMemo(() => {
     const booked = new Set();
-    allReservations.forEach(r => {
-      const rDate = new Date(r.date).toISOString().slice(0, 10);
-      if (rDate === selectedDate) {
-        booked.add(r.startTime?.slice(0, 5));
+    courtAvailability.forEach(r => {
+      const [sh] = (r.startTime || '').split(':').map(Number);
+      const [eh] = (r.endTime || '').split(':').map(Number);
+      for (let h = sh; h < eh; h++) {
+        booked.add(`${String(h).padStart(2, '0')}:00`);
       }
     });
     return booked;
-  }, [allReservations, selectedDate]);
+  }, [courtAvailability]);
 
-  /* ── Dynamic Pricing Algorithm (Rule-Based Engine V2) ── */
+  /* ── Dynamic Pricing Algorithm (Rule-Based Engine V3) ── */
   const calculateDynamicPrice = () => {
-    let basePrice = selectedCourt?.hourlyRate || 1500;
+    const baseHourly = selectedCourt?.hourlyRate || 1500;
     let total = 0;
     let breakdown = [];
     let weekendCount = 0;
     let peakCount = 0;
+    let peakHours = 0;
 
-    if (!selectedDate || !selectedSlot) return { total: basePrice, breakdown, baseHourly: basePrice };
+    if (!selectedDate || !selectedSlot) return { total: baseHourly * durationHours, breakdown, baseHourly };
 
     for (let i = 0; i < durationDays; i++) {
         let dailyMultiplier = 1;
@@ -123,35 +139,37 @@ export default function Reservations() {
             weekendCount++;
         }
 
-        // Rule 2: Peak Hour Surcharge
-        const hour = parseInt(selectedSlot.split(':')[0], 10);
-        if (hour >= 17 && hour <= 21) {
-            dailyMultiplier *= 1.5;
-            peakCount++;
+        // Rule 2: Peak Hour Surcharge — check if ANY hour in the session is peak
+        const startHour = parseInt(selectedSlot.split(':')[0], 10);
+        let sessionHasPeak = false;
+        for (let h = startHour; h < startHour + durationHours; h++) {
+          if (h >= 17 && h <= 21) { sessionHasPeak = true; peakHours++; }
         }
+        if (sessionHasPeak) { dailyMultiplier *= 1.5; peakCount++; }
 
-        total += Math.round(basePrice * dailyMultiplier);
+        total += Math.round(baseHourly * durationHours * dailyMultiplier);
     }
-// peakCount and weekendCount are used to generate a clear breakdown of the surcharges applied based on the user's selections. This way, users can see exactly how the final price is derived from the base price and the specific rules that apply to their booking.
+    // peakCount and weekendCount are used to generate a clear breakdown
     if (weekendCount > 0) breakdown.push({ label: `Weekend Surcharge (x${weekendCount} days)`, value: 'x1.2' });
     if (peakCount > 0) breakdown.push({ label: `Peak Hour Surcharge (x${peakCount} days)`, value: 'x1.5' });
+    if (durationHours > 1) breakdown.push({ label: `Duration`, value: `x${durationHours} hrs` });
 
     return { 
-      baseHourly: basePrice, 
-      total: total,
+      baseHourly, 
+      total,
       breakdown 
     };
   };
 
-  const pricing = useMemo(() => calculateDynamicPrice(), [selectedCourt, selectedDate, selectedSlot, durationDays]);
+  const pricing = useMemo(() => calculateDynamicPrice(), [selectedCourt, selectedDate, selectedSlot, durationDays, durationHours]);
 
   /* ── Submit — create reservation then redirect straight to Khalti ── */
   const submitReservation = async () => {
     setSubmitting(true);
     setMessage('');
     try {
-      const endTime = TIME_SLOTS[TIME_SLOTS.indexOf(selectedSlot) + 1] || '22:00';
-      const totalPrice = pricing.total; 
+      const endTime = addHours(selectedSlot, durationHours);
+      const totalPrice = pricing.total;
 
       // 1. Create the reservation
       const data = await apiClient.post('/api/reservations', {
@@ -162,14 +180,14 @@ export default function Reservations() {
       const reservationIds = data?.allReservations?.map(r => r._id);
       if (!reservationIds || reservationIds.length === 0) throw new Error('Reservation created but ID missing.');
 
-      // 2. Initiate Khalti payment
-      setMessage('Redirecting to Khalti payment…');
+      // 2. Initiate Stripe payment
+      setMessage('Redirecting to Stripe Checkout…');
       const payData = await apiClient.post('/api/payment/initiate', {
         token,
         body: { reservationIds },
       });
 
-      // 3. Redirect browser to Khalti's hosted payment page
+      // 3. Redirect browser to Stripe Checkout page
       window.location.href = payData.payment_url;
     } catch (err) {
       setMessageType('error');
@@ -182,14 +200,12 @@ export default function Reservations() {
 
   const canNext = () => {
     if (step === 0) return Boolean(courtId);
-    if (step === 1) return Boolean(selectedDate && selectedSlot && durationDays >= 1);
+    if (step === 1) return Boolean(selectedDate && selectedSlot && durationHours >= 1 && durationDays >= 1);
     if (step === 2) return Boolean(name.trim()) && contact.trim().length >= 7;
     return true;
   };
 
-  const endTime = selectedSlot
-    ? TIME_SLOTS[TIME_SLOTS.indexOf(selectedSlot) + 1] || '22:00'
-    : '';
+  const endTime = selectedSlot ? addHours(selectedSlot, durationHours) : '';
 
   const handleNext = () => {
     if (!canNext()) return;
@@ -367,15 +383,15 @@ export default function Reservations() {
 
                 <section className={styles.section}>
                   <h2 className={styles.sectionTitle}>
-                    🕐 Available Slots
+                    🕐 Select Start Time
                     <span className={styles.slotLegend}>
                       <span className={styles.legendDot} style={{ background: '#f97316' }} /> Selected
                       <span className={styles.legendDot} style={{ background: '#444' }} /> Available
-                      <span className={styles.legendDot} style={{ background: '#2a2a2a', border: '1px solid #444', textDecoration: 'line-through' }} /> Booked
+                      <span className={styles.legendDot} style={{ background: '#2a2a2a', border: '1px solid #444' }} /> Booked
                     </span>
                   </h2>
                   <div className={styles.slotGrid}>
-                    {TIME_SLOTS.map((slot, idx) => {
+                    {TIME_SLOTS.map((slot) => {
                       const isBooked = bookedSlots.has(slot);
                       const isSelected = selectedSlot === slot;
                       return (
@@ -383,7 +399,7 @@ export default function Reservations() {
                           key={slot}
                           disabled={isBooked}
                           className={`${styles.slotBtn} ${isBooked ? styles.slotBooked : ''} ${isSelected ? styles.slotSelected : ''}`}
-                          onClick={() => setSelectedSlot(slot)}
+                          onClick={() => { setSelectedSlot(slot); setDurationHours(1); }}
                         >
                           {isBooked ? <s>{fmt12(slot)}</s> : fmt12(slot)}
                         </button>
@@ -393,33 +409,61 @@ export default function Reservations() {
                 </section>
 
                 {selectedSlot && (
-                  <section className={styles.section} style={{ marginTop: '2rem' }}>
-                    <h2 className={styles.sectionTitle}>📅 Consecutive Days</h2>
-                    <p className={styles.mutedText} style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>
-                      Do you want to book this exact time slot for multiple consecutive days?
-                    </p>
-                    <div className={styles.durationSelector}>
-                      {[{days: 1, label: 'Just once'}, {days: 7, label: 'Whole Week'}, {days: 14, label: 'Two Weeks'}].map(opt => (
-                        <label 
-                          key={opt.days} 
-                          className={`${styles.durationLabel} ${durationDays === opt.days ? styles.durationActive : ''}`}
-                        >
-                          <input 
-                            type="radio" 
-                            name="durationDays" 
-                            value={opt.days} 
-                            checked={durationDays === opt.days} 
-                            onChange={() => setDurationDays(opt.days)} 
-                            style={{ display: 'none' }}
-                          />
-                          <div className={styles.durationContent}>
-                            <strong>{opt.days} {opt.days === 1 ? 'Day' : 'Days'}</strong>
-                            <span>{opt.label}</span>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </section>
+                  <>
+                    <section className={styles.section}>
+                      <h2 className={styles.sectionTitle}>⏱️ Session Duration</h2>
+                      <p className={styles.mutedText} style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>
+                        How many hours do you want to play? ({fmt12(selectedSlot)} → {fmt12(endTime)})
+                      </p>
+                      <div className={styles.hourSelector}>
+                        {Array.from({ length: maxHoursForSlot(selectedSlot) }, (_, i) => i + 1).map(h => {
+                          // Check if adding h hours would overlap a booked slot
+                          const startH = parseInt(selectedSlot.split(':')[0], 10);
+                          const wouldOverlap = Array.from({ length: h }, (_, i) => `${String(startH + i).padStart(2, '0')}:00`)
+                            .some(s => s !== selectedSlot && bookedSlots.has(s));
+                          return (
+                            <button
+                              key={h}
+                              disabled={wouldOverlap}
+                              className={`${styles.hourBtn} ${durationHours === h ? styles.hourBtnActive : ''} ${wouldOverlap ? styles.hourBtnDisabled : ''}`}
+                              onClick={() => !wouldOverlap && setDurationHours(h)}
+                            >
+                              <span className={styles.hourNum}>{h}</span>
+                              <span className={styles.hourLabel}>{h === 1 ? 'Hour' : 'Hours'}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section className={styles.section}>
+                      <h2 className={styles.sectionTitle}>📅 Consecutive Days</h2>
+                      <p className={styles.mutedText} style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>
+                        Book this same slot for multiple consecutive days?
+                      </p>
+                      <div className={styles.durationSelector}>
+                        {[{days: 1, label: 'Just once'}, {days: 7, label: 'Whole Week'}, {days: 14, label: 'Two Weeks'}].map(opt => (
+                          <label 
+                            key={opt.days} 
+                            className={`${styles.durationLabel} ${durationDays === opt.days ? styles.durationActive : ''}`}
+                          >
+                            <input 
+                              type="radio" 
+                              name="durationDays" 
+                              value={opt.days} 
+                              checked={durationDays === opt.days} 
+                              onChange={() => setDurationDays(opt.days)} 
+                              style={{ display: 'none' }}
+                            />
+                            <div className={styles.durationContent}>
+                              <strong>{opt.days} {opt.days === 1 ? 'Day' : 'Days'}</strong>
+                              <span>{opt.label}</span>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </section>
+                  </>
                 )}
               </>
             )}
@@ -464,7 +508,7 @@ export default function Reservations() {
                         {durationDays > 1 && ` (x${durationDays} Days)`}
                       </strong>
                     </div>
-                    <div className={styles.reviewRow}><span>Time</span><strong>{fmt12(selectedSlot)} – {fmt12(endTime)}</strong></div>
+                    <div className={styles.reviewRow}><span>Time</span><strong>{fmt12(selectedSlot)} – {fmt12(endTime)} ({durationHours} {durationHours === 1 ? 'hr' : 'hrs'})</strong></div>
                     <div className={styles.reviewRow}><span>Name</span><strong>{name}</strong></div>
                     <div className={styles.reviewRow}><span>Contact</span><strong>{contact}</strong></div>
                   </div>
@@ -484,9 +528,13 @@ export default function Reservations() {
                     </div>
                   ))}
 
+                  <div className={styles.summaryRow}>
+                    <span>Session</span>
+                    <span>{durationHours} {durationHours === 1 ? 'hour' : 'hours'}</span>
+                  </div>
                   {durationDays > 1 && (
                     <div className={styles.summaryRow}>
-                      <span>Duration</span>
+                      <span>Days</span>
                       <span>{durationDays} Days</span>
                     </div>
                   )}
@@ -540,7 +588,7 @@ export default function Reservations() {
               </div>
               <div className={styles.summaryRow}>
                 <span>🕐 Time</span>
-                <strong>{selectedSlot ? `${fmt12(selectedSlot)} – ${fmt12(endTime)}` : '—'}</strong>
+                <strong>{selectedSlot ? `${fmt12(selectedSlot)} – ${fmt12(endTime)}` : '—'}{durationHours > 1 && selectedSlot ? ` (${durationHours}h)` : ''}</strong>
               </div>
               <div className={styles.summaryRow}>
                 <span>🏟️ Court</span>
@@ -558,7 +606,7 @@ export default function Reservations() {
             >
               {submitting ? 'Processing…' : 'Confirm Booking →'}
             </button>
-            <p className={styles.secureNote}> Secure payment powered by Khalti</p>
+            <p className={styles.secureNote}> Secure payment powered by Stripe</p>
           </aside>
         </div>
       </main>

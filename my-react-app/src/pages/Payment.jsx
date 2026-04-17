@@ -16,7 +16,7 @@ export default function Payment() {
 
   const [status, setStatus] = useState('idle'); // idle | processing | success | error
   const [message, setMessage] = useState('');
-  const [method, setMethod] = useState('khalti');
+  const [method, setMethod] = useState('stripe');
 
   useEffect(() => {
     if (!reservation) {
@@ -27,8 +27,8 @@ export default function Payment() {
     return undefined;
   }, [reservation, navigate]);
 
-  /* ── Khalti Payment ── */
-  const handleKhaltiPay = async () => {
+  /* ── Stripe Payment ── */
+  const handleStripePay = async () => {
     if (!reservation?._id) {
       setStatus('error');
       setMessage('Reservation ID missing. Please try booking again.');
@@ -41,19 +41,18 @@ export default function Payment() {
         token,
         body: { reservationId: reservation._id },
       });
-      // Redirect browser to Khalti's payment page
+      // Redirect browser to Stripe Checkout page
       window.location.href = data.payment_url;
     } catch (err) {
       setStatus('error');
-      setMessage(err.message || 'Failed to initiate Khalti payment. Please try again.');
+      setMessage(err.message || 'Failed to initiate payment. Please try again.');
     }
   };
 
   const handlePayment = () => {
-    if (method === 'khalti') {
-      handleKhaltiPay();
+    if (method === 'stripe') {
+      handleStripePay();
     } else {
-      // Placeholder for other methods
       setStatus('error');
       setMessage(`${method} payment integration coming soon.`);
     }
@@ -72,7 +71,7 @@ export default function Payment() {
   }, [reservation, amount]);
 
   const paymentOptions = [
-    { value: 'khalti', label: 'Khalti', hint: 'Rewards eligible · Recommended' },
+    { value: 'stripe', label: 'Stripe Card', hint: 'Visa · Mastercard · International cards' },
   ];
 
   return (
@@ -85,7 +84,7 @@ export default function Payment() {
           <div>
             <p className={styles.eyebrow}> Secure checkout</p>
             <h2>Complete your payment</h2>
-            <p className={styles.subtext}>Review your reservation and pay with Khalti.</p>
+            <p className={styles.subtext}>Review your reservation and pay securely with Stripe.</p>
           </div>
         </header>
 
@@ -117,7 +116,7 @@ export default function Payment() {
                   <p className={styles.eyebrow}>Payment options</p>
                   <h3>Select method</h3>
                 </div>
-                <p className={styles.subtext}>Supported wallets in Nepal</p>
+                <p className={styles.subtext}>Credit & debit cards accepted</p>
               </div>
               <div className={styles.methodGrid}>
                 {paymentOptions.map((option) => (
@@ -149,8 +148,8 @@ export default function Payment() {
                 disabled={status === 'processing'}
               >
                 {status === 'processing'
-                  ? '⏳ Redirecting to Khalti…'
-                  : `Pay NPR ${amount} with ${method}`}
+                  ? '⏳ Redirecting to Stripe…'
+                  : `Pay NPR ${amount} with Stripe`}
               </button>
               <p className={styles.helpText}>You will receive a confirmation SMS after successful payment.</p>
             </div>

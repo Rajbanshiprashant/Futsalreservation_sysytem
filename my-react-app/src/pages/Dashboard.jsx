@@ -4,6 +4,12 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { apiClient } from '../services/apiClient.js';
 import styles from './Dashboard.module.css';
 
+// Helper: compute hours remaining until booking start
+function hoursUntilStart(dateStr, startTime) {
+  const bookingStart = new Date(`${new Date(dateStr).toISOString().slice(0, 10)}T${startTime}:00`);
+  return (bookingStart - new Date()) / (1000 * 60 * 60);
+}
+
 export default function Dashboard() {
   const { user, logout, token, updateUser } = useAuth();
   const navigate = useNavigate();
@@ -11,6 +17,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef(null);
+  // Cancellation modal state
+  const [cancelModal, setCancelModal] = useState(null); // { res, refundAmt, fee, cancelling }
+  const [cancelResult, setCancelResult] = useState(null); // { refund } after success
 
   useEffect(() => {
     if (!token) return;
@@ -19,17 +28,17 @@ export default function Dashboard() {
       .then(data => {
         const rawRes = Array.isArray(data) ? data : [];
         
-        // Group reservations by pidx (if they have one) so Multi-Day bookings appear as 1 ticket
+        // Group reservations by stripeSessionId (if they have one) so Multi-Day bookings appear as 1 ticket
         const grouped = [];
-        const pidxMap = {};
+        const sessionMap = {};
 
         rawRes.forEach(res => {
-          if (!res.pidx) {
-            // Legacy or no pidx, push as individual
+          if (!res.stripeSessionId) {
+            // Legacy or no stripeSessionId, push as individual
             grouped.push({ ...res, isGroup: false });
           } else {
-            if (!pidxMap[res.pidx]) {
-              pidxMap[res.pidx] = {
+            if (!sessionMap[res.stripeSessionId]) {
+              sessionMap[res.stripeSessionId] = {
                 ...res,
                 isGroup: true,
                 groupCount: 1,
@@ -37,19 +46,19 @@ export default function Dashboard() {
                 summedPrice: res.totalPrice || 0,
                 childIds: [res._id]
               };
-              grouped.push(pidxMap[res.pidx]);
+              grouped.push(sessionMap[res.stripeSessionId]);
             } else {
-              pidxMap[res.pidx].groupCount += 1;
-              pidxMap[res.pidx].allDates.push(new Date(res.date));
-              pidxMap[res.pidx].summedPrice += (res.totalPrice || 0);
-              pidxMap[res.pidx].childIds.push(res._id);
+              sessionMap[res.stripeSessionId].groupCount += 1;
+              sessionMap[res.stripeSessionId].allDates.push(new Date(res.date));
+              sessionMap[res.stripeSessionId].summedPrice += (res.totalPrice || 0);
+              sessionMap[res.stripeSessionId].childIds.push(res._id);
             }
           }
         });
 
-        // Sort allDates to find start/end range
+        // Sort allDates to find start/end range — do this for ALL groups, even single-day ones
         grouped.forEach(g => {
-          if (g.isGroup && g.allDates.length > 1) {
+          if (g.isGroup && g.allDates?.length > 0) {
             g.allDates.sort((a, b) => a - b);
             g.startDate = g.allDates[0];
             g.endDate = g.allDates[g.allDates.length - 1];
@@ -78,24 +87,45 @@ const handleAvatarClick = () => {
     if (fileInputRef.current) fileInputRef.current.click();
   };
 
-  const handleCancelBooking = async (reservationObj) => {
-    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
-    
+  // Open cancellation modal — pre-compute refund amounts client-side for display
+  const openCancelModal = (reservationObj) => {
+    const price = reservationObj.isGroup
+      ? Math.round(reservationObj.summedPrice)
+      : Math.round(reservationObj.totalPrice || 0);
+    const fee = Math.round(price * 0.20);
+    const refund = Math.round(price * 0.80);
+    setCancelModal({ res: reservationObj, price, fee, refund, cancelling: false });
+  };
+
+  const handleCancelBooking = async () => {
+    if (!cancelModal) return;
+    const { res: reservationObj } = cancelModal;
+    setCancelModal(m => ({ ...m, cancelling: true }));
+
     try {
-      // If it's a group, we cancel ALL child reservations in the group
       const idsToCancel = reservationObj.isGroup ? reservationObj.childIds : [reservationObj._id];
 
-      await Promise.all(idsToCancel.map(id => 
-        apiClient.put(`/api/reservations/${id}/cancel`, { token })
-      ));
-
-      // Update local state to show it cancelled immediately
-      setReservations(prev => 
-        prev.map(res => res._id === reservationObj._id ? { ...res, status: 'cancelled' } : res)
+      const results = await Promise.all(
+        idsToCancel.map(id => apiClient.put(`/api/reservations/${id}/cancel`, { token }))
       );
+
+      // Use refund data from first result
+      const refundData = results[0]?.refund;
+
+      // Update local state to show cancelled
+      setReservations(prev =>
+        prev.map(res => res._id === reservationObj._id
+          ? { ...res, status: 'cancelled', refundAmount: refundData?.refundAmount || cancelModal.refund }
+          : res
+        )
+      );
+
+      setCancelModal(null);
+      setCancelResult(refundData || { refundAmount: cancelModal.refund, cancellationFee: cancelModal.fee });
     } catch (error) {
       console.error('Failed to cancel booking:', error);
-      alert('Failed to cancel booking. It may have already been processed.');
+      setCancelModal(m => ({ ...m, cancelling: false }));
+      alert(error.message || 'Failed to cancel booking. It may have already been cancelled or the 12-hour deadline has passed.');
     }
   };
 
@@ -209,57 +239,84 @@ const handleAvatarClick = () => {
               </div>
             ) : (
               <div className={styles.bookingsList}>
-                {reservations.map(res => (
-                  <div key={res._id} className={styles.bookingCard}>
-                    <div className={styles.bookingCardTop}>
-                      <div>
-                        <h4 className={styles.courtName}>{res.court?.name || 'Futsal Court'}</h4>
-                        <p className={styles.dateText}>
-                          {res.isGroup && res.groupCount > 1 ? (
-                            <>
-                              {res.startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – {res.endDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} 
-                              <span style={{color:'#f97316', marginLeft:'6px'}}>({res.groupCount} Days)</span> • {res.startTime}–{res.endTime}
-                            </>
-                          ) : (
-                            <>
-                              {new Date(res.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} • {res.startTime}–{res.endTime}
-                            </>
-                          )}
-                        </p>
-                      </div>
-                      <span 
-                        className={styles.statusBadge}
-                        style={{ 
-                          color: getStatusColor(res.status), 
-                          background: `${getStatusColor(res.status)}15`,
-                          border: `1px solid ${getStatusColor(res.status)}40`
-                        }}
-                      >
-                        {res.status?.toUpperCase() || 'UNKNOWN'}
-                      </span>
-                    </div>
-                    <div className={styles.bookingCardBottom}>
-                      <div className={styles.infoRow}>
-                        <span>Player:</span> {res.name}
-                      </div>
-                      <div className={styles.infoRow}>
-                        <span>Contact:</span> {res.contact}
-                      </div>
-                      <div className={styles.priceRow}>
-                        NPR {res.isGroup ? Math.round(res.summedPrice) : Math.round(res.totalPrice || 1500)}
-                        {res.status === 'pending' && (
-                          <button 
-                            className={styles.cancelBtnText} 
-                            onClick={() => handleCancelBooking(res)}
-                            title="Cancel this booking"
+                  {reservations.map(res => {
+                    const isCancellable = ['pending', 'confirmed'].includes(res.status);
+                    const price = res.isGroup ? Math.round(res.summedPrice) : Math.round(res.totalPrice || 0);
+                    // Use startDate for groups (always set now), fall back to res.date for non-groups
+                    const displayDate = (res.isGroup && res.startDate) ? res.startDate : res.date;
+                    const displayTime = res.startTime || '00:00';
+                    const hrs = displayDate ? hoursUntilStart(displayDate, displayTime) : 999;
+                    const nearCutoff = hrs > 0 && hrs < 24;
+                    const pastCutoff = hrs < 12 && hrs > 0;
+
+                    return (
+                      <div key={res._id} className={`${styles.bookingCard} ${res.status === 'cancelled' ? styles.bookingCardCancelled : ''}`}>
+                        <div className={styles.bookingCardTop}>
+                          <div>
+                            <h4 className={styles.courtName}>{res.court?.name || 'Futsal Court'}</h4>
+                            <p className={styles.dateText}>
+                              {res.isGroup && res.groupCount > 1 ? (
+                                <>
+                                  {res.startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – {res.endDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} 
+                                  <span style={{color:'#f97316', marginLeft:'6px'}}>({res.groupCount} Days)</span> • {res.startTime}–{res.endTime}
+                                </>
+                              ) : (
+                                <>
+                                  {new Date(res.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} • {res.startTime}–{res.endTime}
+                                </>
+                              )}
+                            </p>
+                            {/* 12-hour warning */}
+                            {isCancellable && nearCutoff && (
+                              <p className={`${styles.cutoffWarning} ${pastCutoff ? styles.cutoffPast : ''}`}>
+                                {pastCutoff
+                                  ? '⛔ Cannot cancel — less than 12 hours until booking'
+                                  : `⚠️ Less than 24 hrs left — cancel before the 12-hour cutoff`
+                                }
+                              </p>
+                            )}
+                          </div>
+                          <span 
+                            className={styles.statusBadge}
+                            style={{ 
+                              color: getStatusColor(res.status), 
+                              background: `${getStatusColor(res.status)}15`,
+                              border: `1px solid ${getStatusColor(res.status)}40`
+                            }}
                           >
-                            ✖ Cancel
-                          </button>
-                        )}
+                            {res.status?.toUpperCase() || 'UNKNOWN'}
+                          </span>
+                        </div>
+                        <div className={styles.bookingCardBottom}>
+                          <div className={styles.infoRow}>
+                            <span>Player:</span> {res.name}
+                          </div>
+                          <div className={styles.infoRow}>
+                            <span>Contact:</span> {res.contact}
+                          </div>
+                          <div className={styles.priceRow}>
+                            <span>NPR {price}</span>
+                            {/* Show refund info on cancelled bookings */}
+                            {res.status === 'cancelled' && res.refundAmount > 0 && (
+                              <span className={styles.refundBadge}>
+                                💰 Refund: NPR {Math.round(res.refundAmount)}
+                              </span>
+                            )}
+                            {/* Cancel button — only for pending/confirmed and not past deadline */}
+                            {isCancellable && !pastCutoff && (
+                              <button 
+                                className={styles.cancelBtnText} 
+                                onClick={() => openCancelModal(res)}
+                                title="Cancel this booking"
+                              >
+                                ✖ Cancel
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
               </div>
             )}
           </div>
@@ -305,6 +362,69 @@ const handleAvatarClick = () => {
           </div>
         </div>
       </main>
+
+      {/* ── Cancellation Modal ── */}
+      {cancelModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.cancelModal}>
+            <p className={styles.modalEyebrow}>⚠️ Cancel Booking</p>
+            <h3 className={styles.modalTitle}>Are you sure?</h3>
+            <p className={styles.modalSub}>
+              {cancelModal.res.court?.name || 'Futsal Court'} · {cancelModal.res.startTime}–{cancelModal.res.endTime}
+            </p>
+
+            <div className={styles.refundBreakdown}>
+              <div className={styles.refundRow}>
+                <span>Original Amount</span>
+                <span>NPR {cancelModal.price}</span>
+              </div>
+              <div className={styles.refundRow} style={{ color: '#f87171' }}>
+                <span>Cancellation Fee (20%)</span>
+                <span>− NPR {cancelModal.fee}</span>
+              </div>
+              <div className={`${styles.refundRow} ${styles.refundTotal}`}>
+                <span>💰 You Get Back</span>
+                <span>NPR {cancelModal.refund}</span>
+              </div>
+            </div>
+
+            <p className={styles.refundNote}>
+              Refund will be processed within 5–7 business days to your original payment method.
+            </p>
+
+            <div className={styles.modalActions}>
+              <button
+                className={styles.modalBack}
+                onClick={() => setCancelModal(null)}
+                disabled={cancelModal.cancelling}
+              >
+                Keep Booking
+              </button>
+              <button
+                className={styles.modalConfirmRed}
+                onClick={handleCancelBooking}
+                disabled={cancelModal.cancelling}
+              >
+                {cancelModal.cancelling ? 'Cancelling…' : 'Yes, Cancel & Refund'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Cancel Success Toast ── */}
+      {cancelResult && (
+        <div className={styles.toastOverlay} onClick={() => setCancelResult(null)}>
+          <div className={styles.toast}>
+            <p className={styles.toastIcon}>✅</p>
+            <h4 className={styles.toastTitle}>Booking Cancelled</h4>
+            <p className={styles.toastBody}>
+              NPR {cancelResult.refundAmount} will be refunded within 5–7 business days.
+            </p>
+            <p className={styles.toastSub}>Tap anywhere to dismiss</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

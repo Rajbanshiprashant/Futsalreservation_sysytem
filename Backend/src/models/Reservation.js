@@ -16,8 +16,11 @@ const reservationSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   court: { type: mongoose.Schema.Types.ObjectId, ref: 'Court', required: true },
   notes: { type: String, trim: true, maxlength: 500 },
-  pidx: { type: String, trim: true },           // Khalti payment ID
-  transactionId: { type: String, trim: true },   // Khalti transaction ID after verify
+  stripeSessionId: { type: String, trim: true },   // Stripe Checkout Session ID
+  transactionId: { type: String, trim: true },      // Stripe PaymentIntent ID after verify
+  refundAmount: { type: Number, default: 0 },    // Amount to be refunded after 20% deduction
+  cancelledAt: { type: Date },                   // Timestamp when booking was cancelled
+  confirmationEmailSent: { type: Boolean, default: false }, // Guard against duplicate confirmation emails
 }, { timestamps: true });
 
 // Virtual for duration in hours

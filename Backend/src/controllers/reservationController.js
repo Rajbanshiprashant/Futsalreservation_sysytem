@@ -1,7 +1,9 @@
 const { isFuture } = require("date-fns");
 const Reservation = require('../models/Reservation');
 const Court = require('../models/Court');
+const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
+const { sendBookingCancelledEmail } = require('../utils/mailer');
 
 const createReservation = asyncHandler(async (req, res) => {
   const { name, date, startTime, endTime, contact, courtId, totalPrice, days = 1 } = req.body;
@@ -13,6 +15,14 @@ const createReservation = asyncHandler(async (req, res) => {
   const numDays = parseInt(days, 10) || 1;
   const formattedStartTime = startTime.split(':').map(comp => comp.padStart(2, '0')).join(':');
   const formattedEndTime = endTime.split(':').map(comp => comp.padStart(2, '0')).join(':');
+
+  // Validate that startTime < endTime and duration is at least 1 hour
+  const [sh, sm] = formattedStartTime.split(':').map(Number);
+  const [eh, em] = formattedEndTime.split(':').map(Number);
+  const durationMinutes = (eh * 60 + em) - (sh * 60 + sm);
+  if (durationMinutes < 60) {
+    return res.status(400).json({ error: 'Booking duration must be at least 1 hour and end time must be after start time.' });
+  }
 
   if (!isFuture(new Date(date))) {
     return res.status(400).json({ error: "Invalid Date for reservation" });
@@ -37,6 +47,7 @@ const createReservation = asyncHandler(async (req, res) => {
     bookingDates.push(d);
   }
 
+
   /* 
    * ALGORITHM: Interval Scheduling (Collision Detection)
    * 
@@ -51,6 +62,7 @@ const createReservation = asyncHandler(async (req, res) => {
     return Reservation.findOne({
       court: courtId,
       date: d,
+      status: { $in: ['pending', 'confirmed'] },
       $or: [
         { startTime: { $lt: formattedEndTime }, endTime: { $gt: formattedStartTime } }
       ]
@@ -63,6 +75,10 @@ const createReservation = asyncHandler(async (req, res) => {
     return res.status(409).json({ error: `Selected time slot is already booked for one or more of the selected days.` });
   }
 
+  // Calculate actual price based on duration hours
+  const durationHours = durationMinutes / 60;
+  const pricePerDay = totalPrice ? (totalPrice / numDays) : (court.hourlyRate * durationHours);
+
   // Create all reservations
   const reservationsToCreate = bookingDates.map(d => ({
     name,
@@ -72,7 +88,7 @@ const createReservation = asyncHandler(async (req, res) => {
     contact,
     court: courtId,
     user: req.user.id,
-    totalPrice: (totalPrice || court.hourlyRate) / numDays // distribute total price evenly for record keeping
+    totalPrice: Math.round(pricePerDay)
   }));
 
   const reservations = await Reservation.insertMany(reservationsToCreate);
@@ -96,7 +112,10 @@ const getReservations = asyncHandler(async (req, res) => {
   return res.json(reservations);
 });
 
-// Allow a user to cancel their own pending reservation
+// Allow a user to cancel their own booking (pending or confirmed)
+// Rules:
+//   - Must be cancelled at least 12 hours before the booking start time
+//   - A 20% cancellation fee is deducted; 80% is marked as refund
 const cancelReservationUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -111,15 +130,66 @@ const cancelReservationUser = asyncHandler(async (req, res) => {
     return res.status(403).json({ error: 'Not authorized to cancel this booking' });
   }
 
-  // Only allow cancelling if it's pending
-  if (reservation.status !== 'pending') {
-    return res.status(400).json({ error: 'Only pending bookings can be cancelled' });
+  // Only allow cancelling if it's pending or confirmed
+  if (!['pending', 'confirmed'].includes(reservation.status)) {
+    return res.status(400).json({ error: 'Only pending or confirmed bookings can be cancelled' });
   }
 
-  reservation.status = 'cancelled';
+  /* ── 12-Hour Deadline Check ─────────────────────────────────────────────
+   * Combine the reservation date (YYYY-MM-DD) and startTime (HH:MM) into a
+   * single Date so we can compare to the current moment.
+   */
+  const bookingDateStr = new Date(reservation.date).toISOString().slice(0, 10);
+  const bookingStart = new Date(`${bookingDateStr}T${reservation.startTime}:00`);
+  const now = new Date();
+  const hoursUntilBooking = (bookingStart - now) / (1000 * 60 * 60);
+
+  if (hoursUntilBooking < 12) {
+    return res.status(400).json({
+      error: `Cancellations must be made at least 12 hours before your booking. Your slot starts at ${reservation.startTime} on ${bookingDateStr} — it is too late to cancel.`
+    });
+  }
+
+  /* ── Refund Calculation ──────────────────────────────────────────────────
+   * Deduct 20% as a cancellation fee; refund 80% of the paid price.
+   */
+  const cancellationFee = Math.round(reservation.totalPrice * 0.20);
+  const refundAmount    = Math.round(reservation.totalPrice * 0.80);
+
+  reservation.status       = 'cancelled';
+  reservation.cancelledAt  = now;
+  reservation.refundAmount = refundAmount;
   await reservation.save();
 
-  return res.json({ message: 'Reservation cancelled successfully', reservation });
+  // ── Send cancellation email (fire-and-forget) ──
+  try {
+    const [userDoc, courtDoc] = await Promise.all([
+      User.findById(reservation.user).select('email username'),
+      Court.findById(reservation.court).select('name type location'),
+    ]);
+    if (userDoc?.email) {
+      sendBookingCancelledEmail(userDoc.email, {
+        reservation,
+        court: courtDoc || { name: 'Court', type: '', location: '' },
+        username: userDoc.username,
+        refundAmount,
+        cancellationFee,
+      }).catch(err => console.error('Cancellation email failed:', err.message));
+    }
+  } catch (emailErr) {
+    console.error('Failed to prepare cancellation email:', emailErr.message);
+  }
+
+  return res.json({
+    message: 'Reservation cancelled successfully',
+    reservation,
+    refund: {
+      originalAmount: reservation.totalPrice,
+      cancellationFee,
+      refundAmount,
+      note: `Your refund of NPR ${refundAmount} will be processed within 5-7 business days.`
+    }
+  });
 });
 
 module.exports = { createReservation, getReservations, cancelReservationUser };

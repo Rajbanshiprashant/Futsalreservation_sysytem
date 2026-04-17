@@ -883,6 +883,71 @@
   border-color: #2a2a2a;
 }
 
+/* ── Hour Duration Picker ── */
+.hourSelector {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.hourBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  width: 70px;
+  height: 70px;
+  background: #221910;
+  border: 2px solid #2d2218;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.hourBtn:hover:not(:disabled) {
+  border-color: rgba(249,115,22,0.6);
+  background: #2d1c0e;
+}
+
+.hourBtnActive {
+  background: #f97316 !important;
+  border-color: #f97316 !important;
+  box-shadow: 0 6px 18px rgba(249,115,22,0.4);
+}
+
+.hourBtnDisabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: #1a1410 !important;
+  border-color: #221910 !important;
+}
+
+.hourNum {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #e8e0d5;
+  line-height: 1;
+}
+
+.hourBtnActive .hourNum {
+  color: #fff;
+}
+
+.hourLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #7a6a5a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hourBtnActive .hourLabel {
+  color: rgba(255,255,255,0.85);
+}
+
 /* ── Duration / Repeat Booking ── */
 .durationSelector {
   display: grid;
