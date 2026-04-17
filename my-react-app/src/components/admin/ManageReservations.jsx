@@ -93,6 +93,7 @@ const TableRow = styled.tr`
 const TableCell = styled.td`
   padding: 15px;
   border-bottom: 1px solid #e1e5e9;
+  color: #333;
 `;
 
 const TableHeaderCell = styled.th`
@@ -339,7 +340,14 @@ const ManageReservations = () => {
                     {reservation.startTime} - {reservation.endTime}
                   </div>
                 </TableCell>
-                <TableCell>${reservation.totalPrice || 0}</TableCell>
+                <TableCell>
+                  <div>NPR {reservation.totalPrice || 0}</div>
+                  {reservation.status === 'cancelled' && reservation.refundAmount > 0 && (
+                    <div style={{ fontSize: '0.85rem', color: '#e63946', marginTop: '4px', fontWeight: 600 }}>
+                      Refund: NPR {reservation.refundAmount}
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell>
                   <StatusBadge status={reservation.status}>
                     {reservation.status}
